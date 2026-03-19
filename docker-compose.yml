@@ -1,0 +1,29 @@
+services:
+  db:
+    image: postgres:16
+    container_name: db_cementerio
+    restart: always
+    environment:
+      POSTGRES_USER: admin
+      POSTGRES_PASSWORD: admin123 # Cambiar en producción
+      POSTGRES_DB: cementerio_db
+      POSTGRES_HOST_AUTH_METHOD: md5
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  pgadmin:
+    # Interfaz visual para ver la BD (Opcional pero recomendada)
+    image: dpage/pgadmin4
+    container_name: pgadmin_cementerio
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: admin
+    ports:
+      - "5050:80"
+    depends_on:
+      - db
+
+volumes:
+  postgres_data:

@@ -1,0 +1,29 @@
+.permissions-matrix {
+    .p-datatable {
+        .p-datatable-thead > tr > th {
+            background: var(--surface-100);
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .p-datatable-tbody > tr > td {
+            vertical-align: middle;
+        }
+
+        .text-center {
+            text-align: center;
+        }
+    }
+}
+
+:host ::ng-deep {
+    .p-toggleswitch {
+        .p-toggleswitch-slider {
+            background: #ccc;
+        }
+
+        &.p-toggleswitch-checked .p-toggleswitch-slider {
+            background: #3b82f6;
+        }
+    }
+}

@@ -1,0 +1,147 @@
+import { Component, OnInit, inject, signal, ViewChild, ChangeDetectorRef } from '@angular/core';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+import { TitularesService } from '../../../core/services/titulares.service';
+import { AuthService } from '../../../core/services/auth.service';
+import { MessageService, ConfirmationService } from 'primeng/api';
+
+// PrimeNG Imports
+import { Table, TableModule } from 'primeng/table';
+import { ButtonModule } from 'primeng/button';
+import { InputTextModule } from 'primeng/inputtext';
+import { ToolbarModule } from 'primeng/toolbar';
+import { ToastModule } from 'primeng/toast';
+import { ConfirmDialogModule } from 'primeng/confirmdialog';
+import { DialogModule } from 'primeng/dialog';
+import { TextareaModule } from 'primeng/textarea';
+import { IconFieldModule } from 'primeng/iconfield';
+import { InputIconModule } from 'primeng/inputicon';
+import { FormsModule } from '@angular/forms';
+
+@Component({
+    selector: 'app-titulares-list',
+    standalone: true,
+    imports: [
+        CommonModule,
+        TableModule,
+        ButtonModule,
+        InputTextModule,
+        ToolbarModule,
+        ToastModule,
+        ConfirmDialogModule,
+        DialogModule,
+        TextareaModule,
+        IconFieldModule,
+        InputIconModule,
+        FormsModule
+    ],
+    providers: [MessageService, ConfirmationService],
+    templateUrl: './titulares-list.component.html',
+    styleUrls: ['./titulares-list.component.scss']
+})
+export class TitularesListComponent implements OnInit {
+    private titularesService = inject(TitularesService);
+    public authService = inject(AuthService);
+    private messageService = inject(MessageService);
+    private confirmationService = inject(ConfirmationService);
+    private cdr = inject(ChangeDetectorRef);
+
+    titulares: any[] = [];
+    titularDialog: boolean = false;
+    titular: any = {};
+    submitted: boolean = false;
+
+    @ViewChild('dt') dt!: Table;
+
+    ngOnInit(): void {
+        this.loadTitulares();
+    }
+
+    loadTitulares(): void {
+        this.titularesService.getAll().subscribe({
+            next: (data) => {
+                this.titulares = [...data];
+                this.cdr.detectChanges();
+            },
+            error: (error) => {
+                console.error('Error loading titulares:', error);
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los titulares' });
+            }
+        });
+    }
+
+    openNew(): void {
+        this.titular = {};
+        this.submitted = false;
+        this.titularDialog = true;
+    }
+
+    editTitular(titular: any): void {
+        this.titular = { ...titular };
+        this.titularDialog = true;
+    }
+
+    deleteTitular(titular: any): void {
+        this.confirmationService.confirm({
+            message: '¿Está seguro de eliminar al titular ' + titular.nombres + ' ' + titular.apellidos + '?',
+            header: 'Confirmar',
+            icon: 'pi pi-exclamation-triangle',
+            accept: () => {
+                if (titular.id) {
+                    this.titularesService.delete(titular.id).subscribe({
+                        next: () => {
+                            this.messageService.add({ severity: 'success', summary: 'Exitoso', detail: 'Titular Eliminado', life: 3000 });
+                            this.loadTitulares();
+                        },
+                        error: () => {
+                            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar el titular' });
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    hideDialog(): void {
+        this.titularDialog = false;
+        this.submitted = false;
+    }
+
+    saveTitular(): void {
+        this.submitted = true;
+
+        if (this.titular.nombres?.trim() && this.titular.apellidos?.trim()) {
+            if (this.titular.id) {
+                const payload = {
+                    nombres: this.titular.nombres,
+                    apellidos: this.titular.apellidos,
+                    dni: this.titular.dni,
+                    email: this.titular.email,
+                    telefono: this.titular.telefono,
+                    direccion: this.titular.direccion
+                };
+                this.titularesService.update(this.titular.id, payload).subscribe({
+                    next: () => {
+                        this.messageService.add({ severity: 'success', summary: 'Exitoso', detail: 'Titular Actualizado', life: 3000 });
+                        this.loadTitulares();
+                        this.hideDialog();
+                    },
+                    error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la actualización' })
+                });
+            } else {
+                this.titularesService.create(this.titular).subscribe({
+                    next: () => {
+                        this.messageService.add({ severity: 'success', summary: 'Exitoso', detail: 'Titular Creado', life: 3000 });
+                        this.loadTitulares();
+                        this.hideDialog();
+                    },
+                    error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la creación' })
+                });
+            }
+        }
+    }
+
+    onGlobalFilter(table: Table, event: Event) {
+        table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    }
+}

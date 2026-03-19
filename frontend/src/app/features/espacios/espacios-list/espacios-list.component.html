@@ -1,0 +1,143 @@
+<div class="card">
+    <p-toast />
+    <p-toolbar styleClass="mb-6">
+        <ng-template #start>
+            <p-button label="Nuevo" icon="pi pi-plus" class="mr-2" (onClick)="openNew()"
+                *ngIf="authService.hasPermission('crear_espacios')" />
+
+            <!-- Filtro por Sector -->
+            <div class="flex gap-2 items-center ml-4">
+                <label for="sectorFilter" class="font-semibold whitespace-nowrap">Sector:</label>
+                <p-select id="sectorFilter" [(ngModel)]="selectedSectorId" [options]="sectores" placeholder="Todos"
+                    [showClear]="true" (onChange)="onSectorFilter()" [style]="{'min-width': '200px'}" />
+            </div>
+        </ng-template>
+
+        <ng-template #end>
+            <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+        </ng-template>
+    </p-toolbar>
+
+    <p-table #dt [value]="espacios" [rows]="10" [paginator]="true"
+        [globalFilterFields]="['codigo', 'sector.nombre', 'tipo', 'estado']" [tableStyle]="{ 'min-width': '75rem' }"
+        [rowHover]="true" dataKey="id" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} espacios"
+        [showCurrentPageReport]="true">
+        <ng-template #caption>
+            <div class="flex items-center justify-between">
+                <h5 class="m-0">Gestión de Espacios</h5>
+                <p-iconfield>
+                    <p-inputicon styleClass="pi pi-search" />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                </p-iconfield>
+            </div>
+        </ng-template>
+        <ng-template #header>
+            <tr>
+                <th pSortableColumn="codigo" style="min-width:10rem">
+                    Código <p-sortIcon field="codigo" />
+                </th>
+                <th pSortableColumn="sector.nombre">
+                    Sector <p-sortIcon field="sector.nombre" />
+                </th>
+                <th pSortableColumn="tipo">
+                    Tipo <p-sortIcon field="tipo" />
+                </th>
+                <th pSortableColumn="fila">Ubicación</th>
+                <th pSortableColumn="estado">
+                    Estado <p-sortIcon field="estado" />
+                </th>
+                <th style="min-width: 12rem"></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-espacio>
+            <tr>
+                <td>{{ espacio.codigo }}</td>
+                <td>{{ espacio.sector?.nombre || '-' }}</td>
+                <td>
+                    <p-tag [value]="espacio.tipo" [severity]="espacio.tipo === 'NICHO' ? 'info' : 'warn'" />
+                </td>
+                <td>Fila {{ espacio.fila }}, Col {{ espacio.columna }}</td>
+                <td>
+                    <p-tag [value]="espacio.estado"
+                        [severity]="espacio.estado === 'disponible' ? 'success' : espacio.estado === 'ocupado' ? 'danger' : 'warn'" />
+                </td>
+                <td>
+                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                        (click)="editEspacio(espacio)" *ngIf="authService.hasPermission('actualizar_espacios')" />
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                        (click)="deleteEspacio(espacio)" *ngIf="authService.hasPermission('eliminar_espacios')" />
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="6" class="text-center">No se encontraron espacios.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <p-dialog [(visible)]="espacioDialog" [style]="{ width: '450px' }" header="Detalles del Espacio" [modal]="true"
+        class="p-fluid">
+        <ng-template #content>
+            <div class="flex flex-col gap-6">
+                <!-- Sector & Código -->
+                <div>
+                    <label for="sector" class="block font-bold mb-3">Sector</label>
+                    <p-select id="sector" [(ngModel)]="espacio.sectorId" [options]="sectores" optionLabel="label"
+                        optionValue="value" placeholder="Seleccione un sector" required fluid />
+                    <small class="text-red-500" *ngIf="submitted && !espacio.sectorId">El sector es requerido.</small>
+                </div>
+
+                <div>
+                    <label for="codigo" class="block font-bold mb-3">Código</label>
+                    <input type="text" pInputText id="codigo" [(ngModel)]="espacio.codigo" required fluid />
+                    <small class="text-red-500" *ngIf="submitted && !espacio.codigo">El código es requerido.</small>
+                </div>
+
+                <!-- Tipo -->
+                <div>
+                    <label for="tipo" class="block font-bold mb-3">Tipo</label>
+                    <p-select id="tipo" [(ngModel)]="espacio.tipo" [options]="tipoOptions" optionLabel="label"
+                        optionValue="value" placeholder="Seleccione Tipo" fluid />
+                </div>
+
+                <!-- Estado -->
+                <div>
+                    <label for="estado" class="block font-bold mb-3">Estado</label>
+                    <p-select id="estado" [(ngModel)]="espacio.estado" [options]="estadoOptions" optionLabel="label"
+                        optionValue="value" placeholder="Seleccione Estado" fluid />
+                </div>
+
+                <!-- Ubicación Grid -->
+                <div class="grid grid-cols-3 gap-4">
+                    <div>
+                        <label for="fila" class="block font-bold mb-3">Fila</label>
+                        <p-inputnumber id="fila" [(ngModel)]="espacio.fila" [min]="1" fluid />
+                    </div>
+                    <div>
+                        <label for="columna" class="block font-bold mb-3">Col</label>
+                        <p-inputnumber id="columna" [(ngModel)]="espacio.columna" [min]="1" fluid />
+                    </div>
+                    <div>
+                        <label for="nivel" class="block font-bold mb-3">Nivel</label>
+                        <p-inputnumber id="nivel" [(ngModel)]="espacio.nivel" [min]="1" fluid />
+                    </div>
+                </div>
+
+                <!-- Observaciones -->
+                <div>
+                    <label for="observaciones" class="block font-bold mb-3">Observaciones</label>
+                    <textarea id="observaciones" pTextarea [(ngModel)]="espacio.observaciones" rows="3" cols="20"
+                        fluid></textarea>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template #footer>
+            <p-button label="Cancelar" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Guardar" icon="pi pi-check" (click)="saveEspacio()" />
+        </ng-template>
+    </p-dialog>
+
+    <p-confirmDialog [style]="{ width: '450px' }" />
+</div>

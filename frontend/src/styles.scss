@@ -1,0 +1,31 @@
+@use './tailwind.css';
+@use 'primeicons/primeicons.css';
+@use 'assets/layout/layout.scss';
+@use 'assets/demo/demo.scss';
+
+/* Estilos globales para tablas más compactas */
+.p-datatable {
+    .p-datatable-thead > tr > th {
+        padding: 0.5rem 0.75rem !important;
+    }
+    
+    .p-datatable-tbody > tr > td {
+        padding: 0.4rem 0.75rem !important;
+    }
+    
+    .p-datatable-tfoot > tr > td {
+        padding: 0.5rem 0.75rem !important;
+    }
+}
+
+/* Botones de acción en tablas más compactos */
+.p-datatable .p-button.p-button-icon-only {
+    width: 2rem;
+    height: 2rem;
+    padding: 0.25rem;
+}
+
+/* Header de tabla más compacto */
+.p-datatable .p-datatable-header {
+    padding: 0.75rem;
+}

@@ -1,0 +1,212 @@
+<div class="mapa-page">
+    <p-toast />
+
+    <!-- Header -->
+    <div class="mapa-header">
+        <div class="header-content">
+            <h1>
+                <i class="pi pi-th-large"></i>
+                Mapa de Nichos
+            </h1>
+            <div class="sector-badge" *ngIf="sector()">
+                <i class="pi pi-map-marker"></i>
+                <span>{{ sector()?.nombre }}</span>
+            </div>
+        </div>
+        <div class="back-btn">
+            <p-button label="Volver" icon="pi pi-arrow-left" (onClick)="goBack()" />
+        </div>
+    </div>
+
+    <!-- Loading State -->
+    <div *ngIf="loading()" class="nichos-container">
+        <div class="loading-container">
+            <p-progressSpinner strokeWidth="4" />
+            <span class="loading-text">Cargando mapa de nichos...</span>
+        </div>
+    </div>
+
+    <!-- Content -->
+    <div *ngIf="!loading()">
+        <!-- Stats Section -->
+        <div class="stats-section">
+            <div class="stat-card">
+                <div class="stat-icon libre">
+                    <i class="pi pi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value">{{ getCountByEstado('LIBRE') }}</div>
+                    <div class="stat-label">Disponibles</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon ocupado">
+                    <i class="pi pi-user"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value">{{ getCountByEstado('OCUPADO') }}</div>
+                    <div class="stat-label">Ocupados</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon mantenimiento">
+                    <i class="pi pi-wrench"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value">{{ getCountByEstado('MANTENIMIENTO') }}</div>
+                    <div class="stat-label">En Mantenimiento</div>
+                </div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-icon reservado">
+                    <i class="pi pi-lock"></i>
+                </div>
+                <div class="stat-info">
+                    <div class="stat-value">{{ getCountByEstado('RESERVADO') }}</div>
+                    <div class="stat-label">Reservados</div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Controls Section -->
+        <div class="controls-section">
+            <div class="legend">
+                <div class="legend-item" [class.active]="activeFilter() === 'LIBRE'"
+                    [class.inactive]="activeFilter() && activeFilter() !== 'LIBRE'" (click)="toggleFilter('LIBRE')">
+                    <div class="legend-dot libre"></div>
+                    <span>Libre</span>
+                </div>
+                <div class="legend-item" [class.active]="activeFilter() === 'OCUPADO'"
+                    [class.inactive]="activeFilter() && activeFilter() !== 'OCUPADO'" (click)="toggleFilter('OCUPADO')">
+                    <div class="legend-dot ocupado"></div>
+                    <span>Ocupado</span>
+                </div>
+                <div class="legend-item" [class.active]="activeFilter() === 'MANTENIMIENTO'"
+                    [class.inactive]="activeFilter() && activeFilter() !== 'MANTENIMIENTO'"
+                    (click)="toggleFilter('MANTENIMIENTO')">
+                    <div class="legend-dot mantenimiento"></div>
+                    <span>Mantenimiento</span>
+                </div>
+                <div class="legend-item" [class.active]="activeFilter() === 'RESERVADO'"
+                    [class.inactive]="activeFilter() && activeFilter() !== 'RESERVADO'"
+                    (click)="toggleFilter('RESERVADO')">
+                    <div class="legend-dot reservado"></div>
+                    <span>Reservado</span>
+                </div>
+            </div>
+            <div class="view-toggle">
+                <button [class.active]="viewMode() === 'normal'" (click)="setViewMode('normal')" pTooltip="Vista normal"
+                    tooltipPosition="top">
+                    <i class="pi pi-th-large"></i>
+                </button>
+                <button [class.active]="viewMode() === 'compact'" (click)="setViewMode('compact')"
+                    pTooltip="Vista compacta" tooltipPosition="top">
+                    <i class="pi pi-table"></i>
+                </button>
+            </div>
+        </div>
+
+        <!-- Nichos Grid -->
+        <div class="nichos-container">
+            <div class="nichos-grid" [class.view-compact]="viewMode() === 'compact'" *ngIf="espacios().length > 0">
+                @for (espacio of espacios(); track espacio.id) {
+                <div class="nicho-card" [ngClass]="getEstadoClass(espacio.estado)"
+                    [class.filtered-out]="activeFilter() && espacio.estado !== activeFilter()"
+                    (click)="onNichoClick(espacio)" [pTooltip]="getTooltipText(espacio)" tooltipPosition="top">
+                    <div class="nicho-number">{{ getNichoLabel(espacio) }}</div>
+                    <div class="nicho-icon">
+                        <i class="pi" [ngClass]="getIconClass(espacio.estado)"></i>
+                    </div>
+                    <div class="nicho-difunto" *ngIf="espacio.ocupante">
+                        {{ espacio.ocupante.difunto }}
+                    </div>
+                </div>
+                }
+            </div>
+
+            <!-- Empty State -->
+            <div *ngIf="espacios().length === 0" class="empty-state">
+                <div class="empty-icon">
+                    <i class="pi pi-inbox"></i>
+                </div>
+                <h3>Sin espacios registrados</h3>
+                <p>No hay nichos o fosas en este sector. Puedes agregar espacios desde la sección de gestión.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Details Dialog -->
+    <p-dialog [(visible)]="showDialog" [header]="'Nicho ' + (selectedEspacio ? getNichoLabel(selectedEspacio) : '')"
+        [modal]="true" [style]="{ width: '480px' }" styleClass="nicho-dialog" [draggable]="false" [resizable]="false">
+        <ng-template #content>
+            <div *ngIf="selectedEspacio" class="dialog-content">
+                <div class="detail-grid">
+                    <div class="detail-item">
+                        <div class="detail-label">Código</div>
+                        <div class="detail-value">{{ selectedEspacio.codigo || 'N/A' }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Tipo</div>
+                        <div class="detail-value">{{ selectedEspacio.tipoEspacio }}</div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Estado</div>
+                        <div class="detail-value">
+                            <p-tag [value]="selectedEspacio.estado"
+                                [severity]="getEstadoSeverity(selectedEspacio.estado)" />
+                        </div>
+                    </div>
+                    <div class="detail-item">
+                        <div class="detail-label">Sector</div>
+                        <div class="detail-value">{{ selectedEspacio.sector?.nombre || 'Sin sector' }}</div>
+                    </div>
+                </div>
+
+                <div *ngIf="selectedEspacio.fila || selectedEspacio.columna || selectedEspacio.numero" class="divider">
+                </div>
+
+                <div *ngIf="selectedEspacio.fila || selectedEspacio.columna || selectedEspacio.numero"
+                    class="detail-grid">
+                    <div class="detail-item" *ngIf="selectedEspacio.fila">
+                        <div class="detail-label">Fila</div>
+                        <div class="detail-value">{{ selectedEspacio.fila }}</div>
+                    </div>
+                    <div class="detail-item" *ngIf="selectedEspacio.columna">
+                        <div class="detail-label">Columna</div>
+                        <div class="detail-value">{{ selectedEspacio.columna }}</div>
+                    </div>
+                    <div class="detail-item" *ngIf="selectedEspacio.numero">
+                        <div class="detail-label">Número</div>
+                        <div class="detail-value">{{ selectedEspacio.numero }}</div>
+                    </div>
+                </div>
+
+                <div *ngIf="selectedEspacio.ocupado && selectedEspacio.ocupante">
+                    <div class="divider"></div>
+                    <div class="ocupante-section">
+                        <h4><i class="pi pi-user"></i> Información del Ocupante</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Difunto</div>
+                                <div class="detail-value">{{ selectedEspacio.ocupante.difunto }}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Titular</div>
+                                <div class="detail-value">{{ selectedEspacio.ocupante.titular }}</div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Fecha Inhumación</div>
+                                <div class="detail-value">{{ selectedEspacio.ocupante.fechaInhumacion |
+                                    date:'dd/MM/yyyy' }}</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template #footer>
+            <p-button label="Cerrar" icon="pi pi-times" (onClick)="showDialog = false" severity="secondary" />
+        </ng-template>
+    </p-dialog>
+</div>

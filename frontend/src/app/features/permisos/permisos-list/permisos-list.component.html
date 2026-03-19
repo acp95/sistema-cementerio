@@ -1,0 +1,79 @@
+<p-toast />
+<p-confirmDialog />
+
+<p-toolbar styleClass="mb-6">
+    <ng-template #start>
+        <p-button label="Nuevo Permiso" icon="pi pi-plus" severity="primary" class="mr-2" (onClick)="openNew()"
+            *ngIf="authService.hasPermission('crear_permisos')" />
+    </ng-template>
+</p-toolbar>
+
+<p-table #dt [value]="permisos" [rows]="10" [paginator]="true" [globalFilterFields]="['slug', 'descripcion']"
+    [rowHover]="true" dataKey="id" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} registros"
+    [showCurrentPageReport]="true" styleClass="p-datatable-striped">
+    <ng-template #caption>
+        <div class="flex items-center justify-between">
+            <h5 class="m-0">Gestión de Permisos</h5>
+            <p-iconfield>
+                <p-inputicon styleClass="pi pi-search" />
+                <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+            </p-iconfield>
+        </div>
+    </ng-template>
+    <ng-template #header>
+        <tr>
+            <th pSortableColumn="slug" style="min-width: 12rem">
+                <div class="flex justify-between items-center">
+                    Slug
+                    <p-sortIcon field="slug" />
+                </div>
+            </th>
+            <th pSortableColumn="descripcion" style="min-width: 16rem">
+                <div class="flex justify-between items-center">
+                    Descripción
+                    <p-sortIcon field="descripcion" />
+                </div>
+            </th>
+            <th style="min-width: 8rem">Acciones</th>
+        </tr>
+    </ng-template>
+    <ng-template #body let-permiso>
+        <tr>
+            <td>
+                <span class="font-mono text-sm bg-gray-100 px-2 py-1 rounded">{{ permiso.slug }}</span>
+            </td>
+            <td>{{ permiso.descripcion || '-' }}</td>
+            <td>
+                <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                    (onClick)="editPermiso(permiso)" *ngIf="authService.hasPermission('actualizar_permisos')" />
+                <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                    (onClick)="deletePermiso(permiso)" *ngIf="authService.hasPermission('eliminar_permisos')" />
+            </td>
+        </tr>
+    </ng-template>
+</p-table>
+
+<p-dialog [(visible)]="permisoDialog" [style]="{ width: '450px' }" header="Detalle del Permiso" [modal]="true">
+    <ng-template #content>
+        <div class="flex flex-col gap-4">
+            <div>
+                <label for="slug" class="block font-bold mb-2">Slug (Identificador)</label>
+                <input type="text" pInputText id="slug" [(ngModel)]="permiso.slug" required class="w-full"
+                    placeholder="Ej: ver_reportes" />
+                @if (submitted && !permiso.slug) {
+                <small class="text-red-500">El slug es requerido.</small>
+                }
+            </div>
+            <div>
+                <label for="descripcion" class="block font-bold mb-2">Descripción</label>
+                <input type="text" pInputText id="descripcion" [(ngModel)]="permiso.descripcion" class="w-full"
+                    placeholder="Descripción del permiso" />
+            </div>
+        </div>
+    </ng-template>
+
+    <ng-template #footer>
+        <p-button label="Cancelar" icon="pi pi-times" [text]="true" (onClick)="hideDialog()" />
+        <p-button label="Guardar" icon="pi pi-check" (onClick)="savePermiso()" />
+    </ng-template>
+</p-dialog>

@@ -1,0 +1,18 @@
+.sectores-container {
+    padding: 0;
+}
+
+.table-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 1rem 0;
+
+    input {
+        width: 300px;
+
+        @media (max-width: 768px) {
+            width: 100%;
+        }
+    }
+}

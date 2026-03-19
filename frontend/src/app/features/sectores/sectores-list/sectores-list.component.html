@@ -1,0 +1,111 @@
+<div class="card">
+    <p-toast />
+    <p-toolbar styleClass="mb-6">
+        <ng-template #start>
+            <p-button label="Nuevo" icon="pi pi-plus" class="mr-2" (onClick)="openNew()"
+                *ngIf="authService.hasPermission('crear_sectores')" />
+        </ng-template>
+
+        <ng-template #end>
+            <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+        </ng-template>
+    </p-toolbar>
+
+    <p-table #dt [value]="(sectores$ | async) || []" [rows]="10" [paginator]="true"
+        [globalFilterFields]="['nombre', 'descripcion', 'tipo']" [tableStyle]="{ 'min-width': '75rem' }"
+        [rowHover]="true" dataKey="id" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} sectores"
+        [showCurrentPageReport]="true">
+        <ng-template #caption>
+            <div class="flex items-center justify-between">
+                <h5 class="m-0">Gestión de Sectores</h5>
+                <p-iconfield>
+                    <p-inputicon styleClass="pi pi-search" />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                </p-iconfield>
+            </div>
+        </ng-template>
+        <ng-template #header>
+            <tr>
+                <th pSortableColumn="nombre" style="min-width:16rem">
+                    Nombre
+                    <p-sortIcon field="nombre" />
+                </th>
+                <th>Descripción</th>
+                <th pSortableColumn="tipo">
+                    Tipo
+                    <p-sortIcon field="tipo" />
+                </th>
+                <th pSortableColumn="capacidadTotal">
+                    Capacidad
+                    <p-sortIcon field="capacidadTotal" />
+                </th>
+                <th style="min-width: 12rem"></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-sector>
+            <tr>
+                <td>{{ sector.nombre }}</td>
+                <td>{{ sector.descripcion }}</td>
+                <td>{{ sector.tipoEspacio }}</td>
+                <td>{{ sector.capacidadTotal }}</td>
+                <td>
+                    <p-button icon="pi pi-map" class="mr-2" [rounded]="true" [outlined]="true" severity="info"
+                        (click)="verMapa(sector)" pTooltip="Ver Mapa de Nichos" tooltipPosition="top" />
+                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                        (click)="editSector(sector)" *ngIf="authService.hasPermission('actualizar_sectores')" />
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                        (click)="deleteSector(sector)" *ngIf="authService.hasPermission('eliminar_sectores')" />
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="5" class="text-center">No se encontraron sectores.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <p-dialog [(visible)]="sectorDialog" [style]="{ width: '450px' }" header="Detalles del Sector" [modal]="true">
+        <ng-template #content>
+            <div class="flex flex-col gap-6">
+                <div>
+                    <label for="nombre" class="block font-bold mb-3">Nombre</label>
+                    <input type="text" pInputText id="nombre" [(ngModel)]="sector.nombre" required autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !sector.nombre">El nombre es requerido.</small>
+                </div>
+                <div>
+                    <label for="descripcion" class="block font-bold mb-3">Descripción</label>
+                    <textarea id="descripcion" pTextarea [(ngModel)]="sector.descripcion" required rows="3" cols="20"
+                        fluid></textarea>
+                </div>
+
+                <div>
+                    <span class="block font-bold mb-4">Tipo de Espacio</span>
+                    <div class="grid grid-cols-12 gap-4">
+                        <div class="flex items-center gap-2 col-span-6">
+                            <p-radiobutton id="nicho" name="tipoEspacio" value="nicho"
+                                [(ngModel)]="sector.tipoEspacio" />
+                            <label for="nicho">Nicho</label>
+                        </div>
+                        <div class="flex items-center gap-2 col-span-6">
+                            <p-radiobutton id="fosa" name="tipoEspacio" value="fosa" [(ngModel)]="sector.tipoEspacio" />
+                            <label for="fosa">Fosa</label>
+                        </div>
+                    </div>
+                </div>
+
+                <div>
+                    <label for="capacidad" class="block font-bold mb-3">Capacidad Total</label>
+                    <p-inputnumber id="capacidad" [(ngModel)]="sector.capacidadTotal" fluid />
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template #footer>
+            <p-button label="Cancelar" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Guardar" icon="pi pi-check" (click)="saveSector()" />
+        </ng-template>
+    </p-dialog>
+
+    <p-confirmDialog [style]="{ width: '450px' }" />
+</div>

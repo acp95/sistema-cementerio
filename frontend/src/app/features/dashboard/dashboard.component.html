@@ -1,0 +1,154 @@
+<div class="dashboard-container">
+    <!-- Stats Cards -->
+    <div class="stats-grid">
+        <!-- Total Espacios -->
+        <p-card class="stat-card stat-card-primary">
+            <div class="stat-content">
+                <div class="stat-icon">
+                    <i class="pi pi-building"></i>
+                </div>
+                <div class="stat-info">
+                    <p class="stat-label">Total Espacios</p>
+                    @if (loading()) {
+                    <p-skeleton width="80px" height="2rem" />
+                    } @else {
+                    <h2 class="stat-value">{{ stats().totalEspacios }}</h2>
+                    }
+                </div>
+            </div>
+        </p-card>
+
+        <!-- Espacios Ocupados -->
+        <p-card class="stat-card stat-card-success">
+            <div class="stat-content">
+                <div class="stat-icon">
+                    <i class="pi pi-check-circle"></i>
+                </div>
+                <div class="stat-info">
+                    <p class="stat-label">Espacios Ocupados</p>
+                    @if (loading()) {
+                    <p-skeleton width="80px" height="2rem" />
+                    } @else {
+                    <h2 class="stat-value">{{ stats().espaciosOcupados }}</h2>
+                    }
+                </div>
+            </div>
+        </p-card>
+
+        <!-- Espacios Disponibles -->
+        <p-card class="stat-card stat-card-info">
+            <div class="stat-content">
+                <div class="stat-icon">
+                    <i class="pi pi-inbox"></i>
+                </div>
+                <div class="stat-info">
+                    <p class="stat-label">Espacios Disponibles</p>
+                    @if (loading()) {
+                    <p-skeleton width="80px" height="2rem" />
+                    } @else {
+                    <h2 class="stat-value">{{ stats().espaciosDisponibles }}</h2>
+                    }
+                </div>
+            </div>
+        </p-card>
+
+        <!-- Ocupación -->
+        <p-card class="stat-card stat-card-warning">
+            <div class="stat-content">
+                <div class="stat-icon">
+                    <i class="pi pi-chart-pie"></i>
+                </div>
+                <div class="stat-info">
+                    <p class="stat-label">Ocupación</p>
+                    @if (loading()) {
+                    <p-skeleton width="80px" height="2rem" />
+                    } @else {
+                    <h2 class="stat-value">{{ getOccupancyPercentage() }}%</h2>
+                    }
+                </div>
+            </div>
+        </p-card>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="content-grid">
+        <p-card class="quick-actions-card">
+            <ng-template pTemplate="header">
+                <div class="card-header">
+                    <h3><i class="pi pi-bolt mr-2"></i>Acciones Rápidas</h3>
+                </div>
+            </ng-template>
+
+            <div class="actions-grid">
+                <div class="action-item" (click)="navigateTo('/sectores')">
+                    <i class="pi pi-map action-icon"></i>
+                    <h4>Gestionar Sectores</h4>
+                    <p>Administrar sectores del cementerio</p>
+                </div>
+
+                <div class="action-item" (click)="navigateTo('/espacios')">
+                    <i class="pi pi-building action-icon"></i>
+                    <h4>Gestionar Espacios</h4>
+                    <p>Administrar nichos y fosas</p>
+                </div>
+
+                <div class="action-item" (click)="navigateTo('/inhumaciones')">
+                    <i class="pi pi-plus-circle action-icon"></i>
+                    <h4>Nueva Inhumación</h4>
+                    <p>Registrar nuevo difunto</p>
+                </div>
+
+                <div class="action-item" (click)="navigateTo('/pagos')">
+                    <i class="pi pi-dollar action-icon"></i>
+                    <h4>Registrar Pago</h4>
+                    <p>Nuevo pago o servicio</p>
+                </div>
+            </div>
+        </p-card>
+
+        <!-- Recent Payments -->
+        <p-card class="recent-table-card">
+            <ng-template pTemplate="header">
+                <div class="card-header">
+                    <h3><i class="pi pi-list mr-2"></i>Pagos Recientes</h3>
+                    <p-button label="Ver Todos" icon="pi pi-arrow-right" [text]="true" size="small"
+                        (onClick)="navigateTo('/pagos')" />
+                </div>
+            </ng-template>
+
+            @if (loading()) {
+            <div class="skeleton-list">
+                @for (item of [1,2,3,4,5]; track $index) {
+                <p-skeleton width="100%" height="3rem" styleClass="mb-2" />
+                }
+            </div>
+            } @else if (recentPayments().length > 0) {
+            <p-table [value]="recentPayments()" [tableStyle]="{'min-width': '100%'}">
+                <ng-template pTemplate="header">
+                    <tr>
+                        <th>Recibo</th>
+                        <th>Titular</th>
+                        <th>Concepto</th>
+                        <th>Monto</th>
+                        <th>Fecha</th>
+                    </tr>
+                </ng-template>
+                <ng-template pTemplate="body" let-pago>
+                    <tr>
+                        <td>{{ pago.numeroRecibo }}</td>
+                        <td>{{ pago.titular?.nombres || '-' }}</td>
+                        <td>{{ pago.conceptoPago?.descripcion || '-' }}</td>
+                        <td>S/ {{ pago.monto | number:'1.2-2' }}</td>
+                        <td>{{ pago.fechaPago | date:'short' }}</td>
+                    </tr>
+                </ng-template>
+            </p-table>
+            } @else {
+            <div class="empty-state">
+                <i class="pi pi-inbox"></i>
+                <p>No hay pagos registrados</p>
+            </div>
+            }
+        </p-card>
+    </div>
+</div>

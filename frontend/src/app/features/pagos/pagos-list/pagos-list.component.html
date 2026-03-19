@@ -1,0 +1,177 @@
+<div class="card">
+    <p-toast />
+    <p-toolbar styleClass="mb-6">
+        <ng-template #start>
+            <p-button label="Nuevo Pago" icon="pi pi-plus" class="mr-2" (onClick)="openNew()"
+                *ngIf="authService.hasPermission('crear_pagos')" />
+        </ng-template>
+
+        <ng-template #end>
+            <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+        </ng-template>
+    </p-toolbar>
+
+    <p-table #dt [value]="pagos" [rows]="10" [paginator]="true"
+        [globalFilterFields]="['titular.nombres', 'titular.apellidos', 'codigoRecibo', 'estado']"
+        [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pagos" [showCurrentPageReport]="true">
+        <ng-template #caption>
+            <div class="flex items-center justify-between">
+                <h5 class="m-0">Gestión de Caja</h5>
+                <p-iconfield>
+                    <p-inputicon styleClass="pi pi-search" />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                </p-iconfield>
+            </div>
+        </ng-template>
+        <ng-template #header>
+            <tr>
+                <th pSortableColumn="codigoRecibo">
+                    Recibo <p-sortIcon field="codigoRecibo" />
+                </th>
+                <th pSortableColumn="fechaPago">
+                    Fecha <p-sortIcon field="fechaPago" />
+                </th>
+                <th pSortableColumn="titular.nombres" style="min-width:10rem">
+                    Titular <p-sortIcon field="titular.nombres" />
+                </th>
+                <th style="min-width:10rem">
+                    Difunto
+                </th>
+                <th style="min-width:12rem">
+                    Concepto
+                </th>
+                <th pSortableColumn="montoTotal">
+                    Monto <p-sortIcon field="montoTotal" />
+                </th>
+                <th pSortableColumn="estado">
+                    Estado <p-sortIcon field="estado" />
+                </th>
+                <th style="min-width: 14rem">Acciones</th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-pago>
+            <tr>
+                <td>{{ pago.codigoRecibo || '-' }}</td>
+                <td>{{ pago.fechaPago | date:'dd/MM/yyyy' }}</td>
+                <td>{{ pago.titular?.nombres }} {{ pago.titular?.apellidos }}</td>
+                <td>
+                    <span *ngIf="pago.inhumacion?.difunto">
+                        {{ pago.inhumacion.difunto.nombres }} {{ pago.inhumacion.difunto.apellidos }}
+                    </span>
+                    <span *ngIf="!pago.inhumacion?.difunto" class="text-gray-400">-</span>
+                </td>
+                <td>
+                    <span *ngIf="pago.detalles?.length > 0">
+                        {{ pago.detalles[0].concepto?.nombre || 'Sin concepto' }}
+                        <span *ngIf="pago.detalles.length > 1" class="text-gray-500">(+{{ pago.detalles.length - 1
+                            }})</span>
+                    </span>
+                    <span *ngIf="!pago.detalles?.length">-</span>
+                </td>
+                <td class="font-bold">S/. {{ pago.montoTotal | number:'1.2-2' }}</td>
+                <td>
+                    <p-tag *ngIf="pago.estado === 'PENDIENTE'" [value]="'Pendiente'" severity="warn" />
+                    <p-tag *ngIf="pago.estado === 'PAGADO'" [value]="'Pagado'" severity="success" />
+                    <p-tag *ngIf="pago.estado === 'ANULADO'" [value]="'Anulado'" severity="danger" />
+                </td>
+                <td>
+                    <p-button *ngIf="pago.estado === 'PENDIENTE' && authService.hasPermission('actualizar_pagos')"
+                        icon="pi pi-money-bill" label="Cobrar" severity="success" class="mr-2" [rounded]="true"
+                        size="small" (click)="cobrarPago(pago)" pTooltip="Registrar cobro" />
+                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                        (click)="editPago(pago)" pTooltip="Editar"
+                        *ngIf="pago.estado !== 'ANULADO' && authService.hasPermission('actualizar_pagos')" />
+                    <p-button *ngIf="pago.estado !== 'ANULADO'" icon="pi pi-print" severity="secondary" class="mr-2"
+                        [rounded]="true" size="small" [text]="true" (click)="imprimirRecibo(pago)"
+                        pTooltip="Imprimir Recibo" />
+                    <p-button *ngIf="pago.estado !== 'ANULADO' && authService.hasPermission('anular_pagos')"
+                        icon="pi pi-ban" label="Anular" severity="danger" class="mr-2" [rounded]="true" size="small"
+                        (click)="anularPago(pago)" pTooltip="Anular pago" />
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="8" class="text-center">No se encontraron pagos.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <p-dialog [(visible)]="pagoDialog" [style]="{ width: '500px' }" header="Detalles del Pago" [modal]="true"
+        class="p-fluid">
+        <ng-template #content>
+            <div class="flex flex-col gap-6">
+                <!-- Titular -->
+                <div>
+                    <label for="titularId" class="block font-bold mb-3">Titular</label>
+                    <p-select id="titularId" name="titularId" [(ngModel)]="pago.titularId" [options]="titulares"
+                        optionLabel="label" optionValue="value" placeholder="Seleccione Titular" [filter]="true"
+                        appendTo="body" styleClass="w-full" />
+                    <small class="text-red-500" *ngIf="submitted && !pago.titularId">Titular es requerido.</small>
+                </div>
+
+                <!-- Concepto -->
+                <div>
+                    <label for="conceptoPagoId" class="block font-bold mb-3">Concepto</label>
+                    <p-select id="conceptoPagoId" name="conceptoPagoId" [(ngModel)]="pago.conceptoPagoId"
+                        [options]="conceptos" optionLabel="label" optionValue="value" placeholder="Seleccione Concepto"
+                        [filter]="true" appendTo="body" styleClass="w-full" (onChange)="onConceptoChange($event)" />
+                    <small class="text-red-500" *ngIf="submitted && !pago.conceptoPagoId">Concepto es requerido.</small>
+                </div>
+
+                <!-- Monto -->
+                <div>
+                    <label for="monto" class="block font-bold mb-3">Monto</label>
+                    <p-inputnumber id="monto" [(ngModel)]="pago.monto" mode="currency" currency="PEN" locale="es-PE"
+                        fluid />
+                    <small class="text-red-500" *ngIf="submitted && pago.monto == null">Monto requerido.</small>
+                </div>
+
+                <!-- Estado -->
+                <div>
+                    <label for="estado" class="block font-bold mb-3">Estado</label>
+                    <p-select id="estado" name="estado" [(ngModel)]="pago.estado" [options]="estadosPago"
+                        optionLabel="label" optionValue="value" placeholder="Seleccione Estado" appendTo="body"
+                        styleClass="w-full" />
+                </div>
+
+                <!-- Metodo -->
+                <div>
+                    <label for="metodoPago" class="block font-bold mb-3">Método de Pago</label>
+                    <p-select id="metodoPago" name="metodoPago" [(ngModel)]="pago.metodoPago" [options]="metodosPago"
+                        optionLabel="label" optionValue="value" placeholder="Seleccione Método" appendTo="body"
+                        styleClass="w-full" />
+                    <small class="text-red-500" *ngIf="submitted && !pago.metodoPago">Método requerido.</small>
+                </div>
+
+                <!-- Fecha Pago -->
+                <div>
+                    <label for="fechaPago" class="block font-bold mb-3">Fecha de Pago</label>
+                    <p-datepicker id="fechaPago" [(ngModel)]="pago.fechaPago" dateFormat="dd/mm/yy" [showIcon]="true"
+                        fluid />
+                </div>
+
+                <!-- Numero Recibo -->
+                <div>
+                    <label for="numeroRecibo" class="block font-bold mb-3">Número Recibo (Opcional)</label>
+                    <input type="text" pInputText id="numeroRecibo" [(ngModel)]="pago.numeroRecibo" fluid />
+                </div>
+
+                <!-- Observaciones -->
+                <div>
+                    <label for="observaciones" class="block font-bold mb-3">Observaciones</label>
+                    <textarea id="observaciones" pTextarea [(ngModel)]="pago.observaciones" rows="3" cols="20"
+                        fluid></textarea>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template #footer>
+            <p-button label="Cancelar" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Registrar" icon="pi pi-check" (click)="savePago()" />
+        </ng-template>
+    </p-dialog>
+
+    <p-confirmDialog [style]="{ width: '450px' }" />
+</div>

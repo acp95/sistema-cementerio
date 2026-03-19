@@ -1,0 +1,117 @@
+<div class="card">
+    <p-toast />
+    <p-toolbar styleClass="mb-6">
+        <ng-template #start>
+            <p-button label="Nuevo" icon="pi pi-plus" class="mr-2" (onClick)="openNew()"
+                *ngIf="authService.hasPermission('crear_conceptos')" />
+        </ng-template>
+
+        <ng-template #end>
+            <div class="flex items-center gap-3">
+                <label for="filter" class="font-semibold">Mostrar:</label>
+                <p-select id="filter" [(ngModel)]="showInactive" [options]="filterOptions" optionLabel="label"
+                    optionValue="value" (onChange)="onFilterChange()" styleClass="w-40" />
+                <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+            </div>
+        </ng-template>
+    </p-toolbar>
+
+    <p-table #dt [value]="conceptos" [rows]="10" [paginator]="true" [globalFilterFields]="['nombre']"
+        [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} conceptos"
+        [showCurrentPageReport]="true">
+        <ng-template #caption>
+            <div class="flex items-center justify-between">
+                <h5 class="m-0">Gestión de Conceptos de Pago</h5>
+                <p-iconfield>
+                    <p-inputicon styleClass="pi pi-search" />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                </p-iconfield>
+            </div>
+        </ng-template>
+        <ng-template #header>
+            <tr>
+                <th pSortableColumn="nombre" style="min-width:14rem">
+                    Nombre <p-sortIcon field="nombre" />
+                </th>
+                <th pSortableColumn="precioBase">
+                    Precio Base <p-sortIcon field="precioBase" />
+                </th>
+                <th pSortableColumn="esPeriodico">
+                    Periódico <p-sortIcon field="esPeriodico" />
+                </th>
+                <th pSortableColumn="activo">
+                    Estado <p-sortIcon field="activo" />
+                </th>
+                <th style="min-width: 12rem"></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-concepto>
+            <tr>
+                <td>{{ concepto.nombre }}</td>
+                <td>{{ concepto.precioBase | currency:'PEN':'symbol-narrow':'1.2-2' }}</td>
+                <td>
+                    <p-tag [value]="concepto.esPeriodico ? 'Sí' : 'No'"
+                        [severity]="concepto.esPeriodico ? 'info' : 'secondary'" />
+                </td>
+                <td>
+                    <p-tag [value]="concepto.activo ? 'Activo' : 'Inactivo'"
+                        [severity]="concepto.activo ? 'success' : 'danger'" />
+                </td>
+                <td>
+                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                        (click)="editConcepto(concepto)" *ngIf="authService.hasPermission('actualizar_conceptos')" />
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                        (click)="deleteConcepto(concepto)" *ngIf="authService.hasPermission('eliminar_conceptos')" />
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="5" class="text-center">No se encontraron conceptos.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <p-dialog [(visible)]="conceptoDialog" [style]="{ width: '450px' }" header="Detalles del Concepto" [modal]="true"
+        class="p-fluid">
+        <ng-template #content>
+            <div class="flex flex-col gap-6">
+                <!-- Nombre -->
+                <div>
+                    <label for="nombre" class="block font-bold mb-3">Nombre</label>
+                    <input type="text" pInputText id="nombre" [(ngModel)]="concepto.nombre" required autofocus fluid />
+                    <small class="text-red-500" *ngIf="submitted && !concepto.nombre">Nombre es requerido.</small>
+                </div>
+
+                <!-- Precio Base -->
+                <div>
+                    <label for="precioBase" class="block font-bold mb-3">Precio Base</label>
+                    <p-inputnumber id="precioBase" [(ngModel)]="concepto.precioBase" mode="currency" currency="PEN"
+                        locale="es-PE" fluid />
+                    <small class="text-red-500" *ngIf="submitted && concepto.precioBase == null">Precio base es
+                        requerido.</small>
+                </div>
+
+                <!-- Es Periódico -->
+                <div class="flex items-center gap-3">
+                    <p-checkbox [(ngModel)]="concepto.esPeriodico" [binary]="true" inputId="esPeriodico" />
+                    <label for="esPeriodico" class="font-bold">¿Es cobro periódico (anual)?</label>
+                </div>
+
+                <!-- Activo -->
+                <div class="flex items-center gap-3">
+                    <p-checkbox [(ngModel)]="concepto.activo" [binary]="true" inputId="activo" />
+                    <label for="activo" class="font-bold">Activo</label>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template #footer>
+            <p-button label="Cancelar" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Guardar" icon="pi pi-check" (click)="saveConcepto()" />
+        </ng-template>
+    </p-dialog>
+
+    <p-confirmDialog [style]="{ width: '450px' }" />
+</div>

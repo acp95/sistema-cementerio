@@ -1,0 +1,125 @@
+<div class="card">
+    <p-toast />
+    <p-toolbar styleClass="mb-6">
+        <ng-template #start>
+            <p-button label="Nuevo" icon="pi pi-plus" class="mr-2" (onClick)="openNew()"
+                *ngIf="authService.hasPermission('crear_titulares')" />
+        </ng-template>
+
+        <ng-template #end>
+            <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+        </ng-template>
+    </p-toolbar>
+
+    <p-table #dt [value]="titulares" [rows]="10" [paginator]="true"
+        [globalFilterFields]="['nombres', 'apellidos', 'dni', 'email']" [tableStyle]="{ 'min-width': '75rem' }"
+        [rowHover]="true" dataKey="id"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} titulares"
+        [showCurrentPageReport]="true">
+        <ng-template #caption>
+            <div class="flex items-center justify-between">
+                <h5 class="m-0">Gestión de Titulares</h5>
+                <p-iconfield>
+                    <p-inputicon styleClass="pi pi-search" />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                </p-iconfield>
+            </div>
+        </ng-template>
+        <ng-template #header>
+            <tr>
+                <th pSortableColumn="nombres" style="min-width:14rem">
+                    Nombres <p-sortIcon field="nombres" />
+                </th>
+                <th pSortableColumn="apellidos" style="min-width:14rem">
+                    Apellidos <p-sortIcon field="apellidos" />
+                </th>
+                <th pSortableColumn="dni">
+                    DNI <p-sortIcon field="dni" />
+                </th>
+                <th pSortableColumn="telefono">
+                    Teléfono <p-sortIcon field="telefono" />
+                </th>
+                <th pSortableColumn="email">
+                    Email <p-sortIcon field="email" />
+                </th>
+                <th style="min-width: 12rem"></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-titular>
+            <tr>
+                <td>{{ titular.nombres }}</td>
+                <td>{{ titular.apellidos }}</td>
+                <td>{{ titular.dni || '-' }}</td>
+                <td>{{ titular.telefono || '-' }}</td>
+                <td>{{ titular.email || '-' }}</td>
+                <td>
+                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                        (click)="editTitular(titular)" *ngIf="authService.hasPermission('actualizar_titulares')" />
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                        (click)="deleteTitular(titular)" *ngIf="authService.hasPermission('eliminar_titulares')" />
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="6" class="text-center">No se encontraron titulares.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <p-dialog [(visible)]="titularDialog" [style]="{ width: '450px' }" header="Detalles del Titular" [modal]="true"
+        class="p-fluid">
+        <ng-template #content>
+            <div class="flex flex-col gap-6">
+                <!-- Nombres -->
+                <div>
+                    <label for="nombres" class="block font-bold mb-3">Nombres</label>
+                    <input type="text" pInputText id="nombres" [(ngModel)]="titular.nombres" required fluid />
+                    <small class="text-red-500" *ngIf="submitted && !titular.nombres">Nombres requeridos.</small>
+                </div>
+
+                <!-- Apellidos -->
+                <div>
+                    <label for="apellidos" class="block font-bold mb-3">Apellidos</label>
+                    <input type="text" pInputText id="apellidos" [(ngModel)]="titular.apellidos" required fluid />
+                    <small class="text-red-500" *ngIf="submitted && !titular.apellidos">Apellidos requeridos.</small>
+                </div>
+
+                <!-- DNI -->
+                <div>
+                    <label for="dni" class="block font-bold mb-3">DNI</label>
+                    <input type="text" pInputText id="dni" [(ngModel)]="titular.dni" pattern="[0-9]*" maxlength="15"
+                        (keypress)="$event.charCode >= 48 && $event.charCode <= 57 || $event.charCode === 0"
+                        placeholder="Solo números" fluid />
+                    <small class="text-gray-500">Solo números (máximo 15 dígitos)</small>
+                </div>
+
+                <!-- Email -->
+                <div>
+                    <label for="email" class="block font-bold mb-3">Email</label>
+                    <input type="email" pInputText id="email" [(ngModel)]="titular.email" fluid />
+                </div>
+
+                <!-- Teléfono -->
+                <div>
+                    <label for="telefono" class="block font-bold mb-3">Teléfono</label>
+                    <input type="text" pInputText id="telefono" [(ngModel)]="titular.telefono" fluid />
+                </div>
+
+                <!-- Dirección -->
+                <div>
+                    <label for="direccion" class="block font-bold mb-3">Dirección</label>
+                    <textarea id="direccion" pTextarea [(ngModel)]="titular.direccion" rows="3" cols="20"
+                        fluid></textarea>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template #footer>
+            <p-button label="Cancelar" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Guardar" icon="pi pi-check" (click)="saveTitular()" />
+        </ng-template>
+    </p-dialog>
+
+    <p-confirmDialog [style]="{ width: '450px' }" />
+</div>

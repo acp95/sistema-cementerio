@@ -1,0 +1,256 @@
+<div class="card">
+    <p-toast />
+    <p-toolbar styleClass="mb-6">
+        <ng-template #start>
+            <p-button label="Nuevo" icon="pi pi-plus" class="mr-2" (onClick)="openNew()"
+                *ngIf="authService.hasPermission('crear_difuntos')" />
+        </ng-template>
+
+        <ng-template #end>
+            <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+        </ng-template>
+    </p-toolbar>
+
+    <p-table #dt [value]="difuntos" [rows]="10" [paginator]="true"
+        [globalFilterFields]="['nombres', 'apellidos', 'dni']" [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true"
+        dataKey="id" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} difuntos"
+        [showCurrentPageReport]="true">
+        <ng-template #caption>
+            <div class="flex items-center justify-between">
+                <h5 class="m-0">Gestión de Difuntos</h5>
+                <p-iconfield>
+                    <p-inputicon styleClass="pi pi-search" />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                </p-iconfield>
+            </div>
+        </ng-template>
+        <ng-template #header>
+            <tr>
+                <th pSortableColumn="nombres" style="min-width:14rem">
+                    Nombres <p-sortIcon field="nombres" />
+                </th>
+                <th pSortableColumn="apellidos" style="min-width:14rem">
+                    Apellidos <p-sortIcon field="apellidos" />
+                </th>
+                <th pSortableColumn="dni">
+                    DNI <p-sortIcon field="dni" />
+                </th>
+                <th pSortableColumn="sexo">
+                    Sexo <p-sortIcon field="sexo" />
+                </th>
+                <th pSortableColumn="fechaDefuncion">
+                    F. Defunción <p-sortIcon field="fechaDefuncion" />
+                </th>
+                <th style="min-width: 12rem"></th>
+            </tr>
+        </ng-template>
+        <ng-template #body let-difunto>
+            <tr>
+                <td>{{ difunto.nombres }}</td>
+                <td>{{ difunto.apellidos }}</td>
+                <td>{{ difunto.dni || '-' }}</td>
+                <td>{{ difunto.sexo === 'M' ? 'Masculino' : 'Femenino' }}</td>
+                <td>{{ difunto.fechaDefuncion | date:'dd/MM/yyyy' }}</td>
+                <td>
+                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
+                        (click)="editDifunto(difunto)" *ngIf="authService.hasPermission('actualizar_difuntos')" />
+                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
+                        (click)="deleteDifunto(difunto)" *ngIf="authService.hasPermission('eliminar_difuntos')" />
+                </td>
+            </tr>
+        </ng-template>
+        <ng-template #emptymessage>
+            <tr>
+                <td colspan="6" class="text-center">No se encontraron difuntos.</td>
+            </tr>
+        </ng-template>
+    </p-table>
+
+    <p-dialog [(visible)]="difuntoDialog" [style]="{ width: '800px' }" header="Registro de Difunto e Inhumación"
+        [modal]="true" class="p-fluid">
+        <ng-template #content>
+            <div class="flex flex-col gap-6">
+                <!-- Sección 1: Datos del Difunto -->
+                <div class="border rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-bold mb-4 text-primary">📋 Datos del Difunto</h3>
+                    <div class="flex flex-col gap-4">
+                        <!-- Nombres y Apellidos -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="nombres" class="block font-bold mb-2">Nombres *</label>
+                                <input type="text" pInputText id="nombres" [(ngModel)]="difunto.nombres" required
+                                    fluid />
+                                <small class="text-red-500" *ngIf="submitted && !difunto.nombres">Nombres
+                                    requeridos.</small>
+                            </div>
+                            <div>
+                                <label for="apellidos" class="block font-bold mb-2">Apellidos *</label>
+                                <input type="text" pInputText id="apellidos" [(ngModel)]="difunto.apellidos" required
+                                    fluid />
+                                <small class="text-red-500" *ngIf="submitted && !difunto.apellidos">Apellidos
+                                    requeridos.</small>
+                            </div>
+                        </div>
+
+                        <!-- DNI y Sexo -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="dni" class="block font-bold mb-2">DNI</label>
+                                <input type="text" pInputText id="dni" [(ngModel)]="difunto.dni" pattern="[0-9]*"
+                                    maxlength="15"
+                                    (keypress)="$event.charCode >= 48 && $event.charCode <= 57 || $event.charCode === 0"
+                                    placeholder="Solo números" fluid />
+                                <small class="text-gray-500">Solo números</small>
+                            </div>
+                            <div>
+                                <label for="sexo" class="block font-bold mb-2">Sexo</label>
+                                <p-select id="sexo" [(ngModel)]="difunto.sexo" [options]="sexoOptions"
+                                    optionLabel="label" optionValue="value" placeholder="Seleccione" fluid />
+                            </div>
+                        </div>
+
+                        <!-- Fechas -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="fechaNacimiento" class="block font-bold mb-2">F. Nacimiento</label>
+                                <p-datepicker id="fechaNacimiento" [(ngModel)]="difunto.fechaNacimiento"
+                                    dateFormat="dd/mm/yy" [showIcon]="true" [showButtonBar]="true" view="date" fluid />
+                            </div>
+                            <div>
+                                <label for="fechaDefuncion" class="block font-bold mb-2">F. Defunción *</label>
+                                <p-datepicker id="fechaDefuncion" [(ngModel)]="difunto.fechaDefuncion"
+                                    dateFormat="dd/mm/yy" [showIcon]="true" [showButtonBar]="true" view="date" fluid />
+                            </div>
+                        </div>
+
+                        <!-- Acta Defunción -->
+                        <div>
+                            <label for="actaDefuncion" class="block font-bold mb-2">Acta de Defunción</label>
+                            <input type="text" pInputText id="actaDefuncion" [(ngModel)]="difunto.actaDefuncion"
+                                fluid />
+                        </div>
+
+                        <!-- Causa Muerte -->
+                        <div>
+                            <label for="causaMuerte" class="block font-bold mb-2">Causa de Muerte</label>
+                            <textarea id="causaMuerte" pTextarea [(ngModel)]="difunto.causaMuerte" rows="2"
+                                fluid></textarea>
+                        </div>
+
+                        <!-- Observaciones Difunto -->
+                        <div>
+                            <label for="observacionesDifunto" class="block font-bold mb-2">Observaciones</label>
+                            <textarea id="observacionesDifunto" pTextarea [(ngModel)]="difunto.observaciones" rows="2"
+                                fluid></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Sección 2: Datos de Inhumación -->
+                <div class="border rounded-lg p-4 bg-gray-50">
+                    <h3 class="text-lg font-bold mb-4 text-primary">⚰️ Datos de Inhumación</h3>
+                    <div class="mb-4" *ngIf="difunto.id">
+                        <small class="text-blue-600">ℹ️ Los datos de inhumación son de solo lectura. Para modificarlos,
+                            use el módulo de Inhumaciones.</small>
+                    </div>
+                    <div class="flex flex-col gap-4">
+                        <!-- Espacio y Titular -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="espacioId" class="block font-bold mb-2">Espacio / Nicho *</label>
+                                <p-select id="espacioId" [(ngModel)]="difunto.inhumacionData.espacioId"
+                                    [options]="espacios" optionLabel="label" optionValue="value"
+                                    placeholder="Seleccione Espacio" [filter]="true" appendTo="body"
+                                    [disabled]="!!difunto.id" fluid />
+                                <small class="text-gray-500">Solo espacios libres</small>
+                            </div>
+                            <div>
+                                <label for="titularId" class="block font-bold mb-2">Titular Responsable</label>
+                                <p-select id="titularId" [(ngModel)]="difunto.inhumacionData.titularId"
+                                    [options]="titulares" optionLabel="label" optionValue="value"
+                                    placeholder="Seleccione Titular" [filter]="true" appendTo="body"
+                                    [disabled]="!!difunto.id" fluid />
+                            </div>
+                        </div>
+
+                        <!-- Fecha y Hora Inhumación (separados) -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="fechaInhumacion" class="block font-bold mb-2">Fecha Inhumación</label>
+                                <p-datepicker id="fechaInhumacion" [(ngModel)]="difunto.inhumacionData.fechaInhumacion"
+                                    dateFormat="dd/mm/yy" [showIcon]="true" [showButtonBar]="true"
+                                    [disabled]="!!difunto.id" fluid />
+                            </div>
+                            <div>
+                                <label for="horaInhumacionDate" class="block font-bold mb-2">Hora Inhumación</label>
+                                <p-datepicker id="horaInhumacionDate"
+                                    [(ngModel)]="difunto.inhumacionData.horaInhumacionDate" [timeOnly]="true"
+                                    hourFormat="24" [showIcon]="true" placeholder="HH:mm" [disabled]="!!difunto.id"
+                                    fluid />
+                            </div>
+                        </div>
+
+                        <!-- Tipo Concesión y Estado -->
+                        <div class="grid grid-cols-2 gap-4">
+                            <div>
+                                <label for="tipoConcesion" class="block font-bold mb-2">Tipo de Concesión</label>
+                                <p-select id="tipoConcesion" [(ngModel)]="difunto.inhumacionData.tipoConcesion"
+                                    [options]="tiposConcesion" optionLabel="label" optionValue="value"
+                                    placeholder="Seleccione Tipo" fluid />
+                            </div>
+                            <div>
+                                <label for="estado" class="block font-bold mb-2">Estado</label>
+                                <p-select id="estado" [(ngModel)]="difunto.inhumacionData.estado"
+                                    [options]="estadosInhumacion" optionLabel="label" optionValue="value"
+                                    placeholder="Seleccione Estado" fluid />
+                            </div>
+                        </div>
+
+                        <!-- Fecha Vencimiento -->
+                        <div>
+                            <label for="fechaVencimiento" class="block font-bold mb-2">Fecha de Vencimiento</label>
+                            <p-datepicker id="fechaVencimiento" [(ngModel)]="difunto.inhumacionData.fechaVencimiento"
+                                dateFormat="dd/mm/yy" [showIcon]="true" [showButtonBar]="true" fluid />
+                            <small class="text-gray-500">Si es temporal, auto-calculado +5 años</small>
+                        </div>
+
+                        <!-- Número Acta -->
+                        <div>
+                            <label for="numeroActa" class="block font-bold mb-2">Número de Acta</label>
+                            <input type="text" pInputText id="numeroActa"
+                                [(ngModel)]="difunto.inhumacionData.numeroActa" fluid />
+                        </div>
+
+                        <!-- Concepto de Pago (solo para nuevo difunto) -->
+                        <div *ngIf="!difunto.id">
+                            <label for="conceptoPagoId" class="block font-bold mb-2">
+                                <i class="pi pi-money-bill mr-2"></i>Concepto de Pago
+                            </label>
+                            <p-select id="conceptoPagoId" [(ngModel)]="difunto.inhumacionData.conceptoPagoId"
+                                [options]="conceptosPago" optionLabel="label" optionValue="value"
+                                placeholder="Seleccione para generar pago automático" [filter]="true" appendTo="body"
+                                fluid />
+                            <small class="text-gray-500">Si selecciona un concepto, se generará un pago
+                                automáticamente</small>
+                        </div>
+
+                        <!-- Observaciones -->
+                        <div>
+                            <label for="observacionesInhumacion" class="block font-bold mb-2">Observaciones de
+                                Inhumación</label>
+                            <textarea id="observacionesInhumacion" pTextarea
+                                [(ngModel)]="difunto.inhumacionData.observaciones" rows="2" fluid></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </ng-template>
+
+        <ng-template #footer>
+            <p-button label="Cancelar" icon="pi pi-times" text (click)="hideDialog()" />
+            <p-button label="Guardar" icon="pi pi-check" (click)="saveDifunto()" />
+        </ng-template>
+    </p-dialog>
+
+    <p-confirmDialog [style]="{ width: '450px' }" />
+</div>

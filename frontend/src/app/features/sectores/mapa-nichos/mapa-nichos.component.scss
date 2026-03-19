@@ -1,0 +1,896 @@
+// Mapa de Nichos - Premium Design
+// Variables
+$primary-gradient: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+$success-color: #10b981;
+$danger-color: #ef4444;
+$warning-color: #f59e0b;
+$info-color: #3b82f6;
+$surface-bg: #f8fafc;
+$card-shadow: 0 10px 40px rgba(0, 0, 0, 0.1);
+
+// Animations
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateX(-20px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateX(0);
+    }
+}
+
+@keyframes pulse {
+
+    0%,
+    100% {
+        transform: scale(1);
+    }
+
+    50% {
+        transform: scale(1.05);
+    }
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+@keyframes shimmer {
+    0% {
+        background-position: -200% 0;
+    }
+
+    100% {
+        background-position: 200% 0;
+    }
+}
+
+@keyframes countUp {
+    from {
+        transform: scale(0.5);
+        opacity: 0;
+    }
+
+    to {
+        transform: scale(1);
+        opacity: 1;
+    }
+}
+
+// Page Container
+.mapa-page {
+    min-height: 100vh;
+    background: linear-gradient(180deg, #f0f4ff 0%, #fafbff 100%);
+    padding: 2rem;
+    animation: fadeInUp 0.6s ease-out;
+}
+
+// Header Section
+.mapa-header {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    margin-bottom: 2rem;
+    flex-wrap: wrap;
+    gap: 1.5rem;
+
+    .header-content {
+        h1 {
+            font-size: 2.25rem;
+            font-weight: 800;
+            background: $primary-gradient;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            margin: 0 0 0.5rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+
+            i {
+                background: $primary-gradient;
+                -webkit-background-clip: text;
+                -webkit-text-fill-color: transparent;
+                font-size: 2rem;
+            }
+        }
+
+        .sector-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            background: white;
+            padding: 0.5rem 1rem;
+            border-radius: 50px;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.08);
+            font-weight: 600;
+            color: #64748b;
+
+            i {
+                color: #667eea;
+            }
+        }
+    }
+
+    .back-btn {
+        ::ng-deep .p-button {
+            background: white !important;
+            color: #64748b !important;
+            border: 1px solid #e2e8f0 !important;
+            border-radius: 12px !important;
+            padding: 0.75rem 1.5rem !important;
+            font-weight: 600 !important;
+            transition: all 0.3s ease !important;
+            box-shadow: 0 2px 10px rgba(0, 0, 0, 0.05);
+
+            &:hover {
+                background: #f1f5f9 !important;
+                transform: translateX(-3px);
+            }
+
+            .pi {
+                margin-right: 0.5rem;
+            }
+        }
+    }
+}
+
+// Stats Section
+.stats-section {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 1rem;
+    margin-bottom: 2rem;
+}
+
+.stat-card {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    transition: all 0.3s ease;
+    animation: fadeInUp 0.6s ease-out backwards;
+    cursor: default;
+
+    &:nth-child(1) {
+        animation-delay: 0.1s;
+    }
+
+    &:nth-child(2) {
+        animation-delay: 0.15s;
+    }
+
+    &:nth-child(3) {
+        animation-delay: 0.2s;
+    }
+
+    &:nth-child(4) {
+        animation-delay: 0.25s;
+    }
+
+    &:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 8px 30px rgba(0, 0, 0, 0.1);
+    }
+
+    .stat-icon {
+        width: 50px;
+        height: 50px;
+        border-radius: 12px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.5rem;
+
+        &.libre {
+            background: rgba(16, 185, 129, 0.15);
+            color: $success-color;
+        }
+
+        &.ocupado {
+            background: rgba(239, 68, 68, 0.15);
+            color: $danger-color;
+        }
+
+        &.mantenimiento {
+            background: rgba(245, 158, 11, 0.15);
+            color: $warning-color;
+        }
+
+        &.reservado {
+            background: rgba(59, 130, 246, 0.15);
+            color: $info-color;
+        }
+    }
+
+    .stat-info {
+        .stat-value {
+            font-size: 1.75rem;
+            font-weight: 800;
+            color: #1e293b;
+            line-height: 1;
+            animation: countUp 0.5s ease-out backwards;
+        }
+
+        .stat-label {
+            font-size: 0.85rem;
+            color: #64748b;
+            font-weight: 500;
+            margin-top: 0.25rem;
+        }
+    }
+}
+
+// Legend & Filters Section
+.controls-section {
+    background: white;
+    border-radius: 16px;
+    padding: 1.25rem;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.05);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 1rem;
+}
+
+.legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.25rem;
+}
+
+.legend-item {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    padding: 0.5rem 1rem;
+    border-radius: 50px;
+    transition: all 0.3s ease;
+    border: 2px solid transparent;
+
+    &:hover {
+        background: #f8fafc;
+    }
+
+    &.active {
+        border-color: currentColor;
+        background: rgba(0, 0, 0, 0.03);
+    }
+
+    &.inactive {
+        opacity: 0.4;
+    }
+
+    .legend-dot {
+        width: 14px;
+        height: 14px;
+        border-radius: 50%;
+        position: relative;
+
+        &::after {
+            content: '';
+            position: absolute;
+            inset: -3px;
+            border-radius: 50%;
+            border: 2px solid currentColor;
+            opacity: 0.3;
+        }
+
+        &.libre {
+            background: $success-color;
+            color: $success-color;
+        }
+
+        &.ocupado {
+            background: $danger-color;
+            color: $danger-color;
+        }
+
+        &.mantenimiento {
+            background: $warning-color;
+            color: $warning-color;
+        }
+
+        &.reservado {
+            background: $info-color;
+            color: $info-color;
+        }
+    }
+
+    span {
+        font-weight: 500;
+        color: #475569;
+        font-size: 0.9rem;
+    }
+}
+
+.view-toggle {
+    display: flex;
+    gap: 0.5rem;
+
+    button {
+        width: 40px;
+        height: 40px;
+        border-radius: 10px;
+        border: 1px solid #e2e8f0;
+        background: white;
+        color: #94a3b8;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        &:hover {
+            background: #f1f5f9;
+            color: #64748b;
+        }
+
+        &.active {
+            background: $primary-gradient;
+            color: white;
+            border-color: transparent;
+        }
+    }
+}
+
+// Nichos Grid
+.nichos-container {
+    background: white;
+    border-radius: 20px;
+    padding: 2rem;
+    box-shadow: $card-shadow;
+    min-height: 400px;
+}
+
+.nichos-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 1.25rem;
+
+    &.view-compact {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+        gap: 0.75rem;
+
+        .nicho-card {
+            padding: 0.75rem;
+
+            .nicho-number {
+                font-size: 1rem;
+            }
+
+            .nicho-icon {
+                font-size: 1.25rem;
+            }
+
+            .nicho-difunto {
+                display: none;
+            }
+        }
+    }
+}
+
+.nicho-card {
+    aspect-ratio: 1;
+    border-radius: 16px;
+    padding: 1rem;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    cursor: pointer;
+    position: relative;
+    transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+    animation: fadeInUp 0.5s ease-out backwards;
+
+    // Stagger animation
+    @for $i from 1 through 50 {
+        &:nth-child(#{$i}) {
+            animation-delay: #{$i * 0.03}s;
+        }
+    }
+
+    // 3D effect
+    transform-style: preserve-3d;
+    perspective: 1000px;
+
+    &::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        border-radius: 16px;
+        border: 2px solid currentColor;
+        opacity: 0.3;
+        transition: all 0.3s ease;
+    }
+
+    &::after {
+        content: '';
+        position: absolute;
+        bottom: -8px;
+        left: 10%;
+        right: 10%;
+        height: 10px;
+        background: currentColor;
+        opacity: 0.15;
+        border-radius: 50%;
+        filter: blur(8px);
+        transition: all 0.3s ease;
+    }
+
+    &:hover {
+        transform: translateY(-8px) scale(1.02);
+        box-shadow: 0 20px 40px rgba(0, 0, 0, 0.15);
+
+        &::before {
+            opacity: 0.6;
+        }
+
+        &::after {
+            opacity: 0.25;
+            bottom: -12px;
+            filter: blur(12px);
+        }
+
+        .nicho-icon {
+            animation: pulse 0.5s ease;
+        }
+    }
+
+    &:active {
+        transform: translateY(-4px) scale(0.98);
+    }
+
+    .nicho-number {
+        font-size: 1.25rem;
+        font-weight: 800;
+        line-height: 1;
+    }
+
+    .nicho-icon {
+        font-size: 1.5rem;
+        transition: all 0.3s ease;
+    }
+
+    .nicho-difunto {
+        font-size: 0.7rem;
+        font-weight: 600;
+        text-align: center;
+        line-height: 1.2;
+        max-width: 100%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+        opacity: 0.85;
+    }
+
+    // Estado styles
+    &.libre {
+        background: linear-gradient(135deg, #d1fae5 0%, #a7f3d0 100%);
+        color: #047857;
+
+        &::after {
+            background: $success-color;
+        }
+    }
+
+    &.ocupado {
+        background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
+        color: #b91c1c;
+
+        &::after {
+            background: $danger-color;
+        }
+    }
+
+    &.mantenimiento {
+        background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%);
+        color: #b45309;
+
+        &::after {
+            background: $warning-color;
+        }
+    }
+
+    &.reservado {
+        background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 100%);
+        color: #1d4ed8;
+
+        &::after {
+            background: $info-color;
+        }
+    }
+
+    &.filtered-out {
+        opacity: 0.15;
+        pointer-events: none;
+        transform: scale(0.9);
+    }
+}
+
+// Empty State
+.empty-state {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem 2rem;
+    text-align: center;
+    animation: fadeInUp 0.6s ease-out;
+
+    .empty-icon {
+        width: 100px;
+        height: 100px;
+        background: linear-gradient(135deg, #e0e7ff 0%, #c7d2fe 100%);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin-bottom: 1.5rem;
+
+        i {
+            font-size: 3rem;
+            color: #6366f1;
+        }
+    }
+
+    h3 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #1e293b;
+        margin: 0 0 0.5rem 0;
+    }
+
+    p {
+        color: #64748b;
+        max-width: 300px;
+    }
+}
+
+// Loading State
+.loading-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    padding: 4rem;
+    gap: 1.5rem;
+
+    .loading-text {
+        color: #64748b;
+        font-weight: 500;
+    }
+
+    ::ng-deep .p-progress-spinner-circle {
+        stroke: #667eea !important;
+    }
+}
+
+// Dialog Styles
+::ng-deep .nicho-dialog {
+    .p-dialog {
+        border-radius: 20px !important;
+        overflow: hidden;
+        box-shadow: 0 25px 50px rgba(0, 0, 0, 0.2) !important;
+    }
+
+    .p-dialog-header {
+        background: $primary-gradient !important;
+        color: white !important;
+        padding: 1.5rem 2rem !important;
+
+        .p-dialog-title {
+            font-weight: 700 !important;
+            font-size: 1.25rem !important;
+        }
+
+        .p-dialog-header-close {
+            color: white !important;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.2) !important;
+            }
+        }
+    }
+
+    .p-dialog-content {
+        padding: 2rem !important;
+    }
+
+    .p-dialog-footer {
+        padding: 1rem 2rem !important;
+        border-top: 1px solid #e2e8f0;
+    }
+}
+
+.dialog-content {
+    .detail-grid {
+        display: grid;
+        grid-template-columns: repeat(2, 1fr);
+        gap: 1.25rem;
+    }
+
+    .detail-item {
+        .detail-label {
+            font-size: 0.8rem;
+            color: #64748b;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            margin-bottom: 0.35rem;
+        }
+
+        .detail-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #1e293b;
+        }
+    }
+
+    .divider {
+        height: 1px;
+        background: linear-gradient(90deg, transparent, #e2e8f0, transparent);
+        margin: 1.5rem 0;
+    }
+
+    .ocupante-section {
+        background: #f8fafc;
+        border-radius: 12px;
+        padding: 1.25rem;
+
+        h4 {
+            font-size: 0.9rem;
+            font-weight: 700;
+            color: #334155;
+            margin: 0 0 1rem 0;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+
+            i {
+                color: #667eea;
+            }
+        }
+    }
+}
+
+// Responsive
+@media (max-width: 768px) {
+    .mapa-page {
+        padding: 1rem;
+    }
+
+    .mapa-header {
+        .header-content h1 {
+            font-size: 1.75rem;
+        }
+    }
+
+    .stats-section {
+        grid-template-columns: repeat(2, 1fr);
+    }
+
+    .controls-section {
+        flex-direction: column;
+        align-items: stretch;
+    }
+
+    .legend {
+        justify-content: center;
+    }
+
+    .nichos-grid {
+        grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+        gap: 0.75rem;
+    }
+
+    .nicho-card {
+        .nicho-difunto {
+            display: none;
+        }
+    }
+}
+
+// Dark Mode Support
+:host-context(.app-dark) {
+    .mapa-page {
+        background: linear-gradient(180deg, #1e1e2e 0%, #121218 100%);
+    }
+
+    .mapa-header {
+        .header-content {
+            .sector-badge {
+                background: rgba(255, 255, 255, 0.1);
+                color: #94a3b8;
+
+                i {
+                    color: #a78bfa;
+                }
+            }
+        }
+
+        .back-btn {
+            ::ng-deep .p-button {
+                background: rgba(255, 255, 255, 0.08) !important;
+                color: #e2e8f0 !important;
+                border-color: rgba(255, 255, 255, 0.1) !important;
+
+                &:hover {
+                    background: rgba(255, 255, 255, 0.15) !important;
+                }
+            }
+        }
+    }
+
+    .stat-card {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+
+        .stat-info {
+            .stat-value {
+                color: #f1f5f9;
+            }
+
+            .stat-label {
+                color: #94a3b8;
+            }
+        }
+    }
+
+    .controls-section {
+        background: rgba(255, 255, 255, 0.05);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .legend-item {
+        &:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        span {
+            color: #cbd5e1;
+        }
+    }
+
+    .view-toggle {
+        button {
+            background: rgba(255, 255, 255, 0.05);
+            border-color: rgba(255, 255, 255, 0.1);
+            color: #94a3b8;
+
+            &:hover {
+                background: rgba(255, 255, 255, 0.1);
+                color: #e2e8f0;
+            }
+
+            &.active {
+                background: $primary-gradient;
+                color: white;
+            }
+        }
+    }
+
+    .nichos-container {
+        background: rgba(255, 255, 255, 0.03);
+        border: 1px solid rgba(255, 255, 255, 0.08);
+    }
+
+    .nicho-card {
+        &.libre {
+            background: linear-gradient(135deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+            color: #6ee7b7;
+        }
+
+        &.ocupado {
+            background: linear-gradient(135deg, rgba(239, 68, 68, 0.2) 0%, rgba(239, 68, 68, 0.1) 100%);
+            color: #fca5a5;
+        }
+
+        &.mantenimiento {
+            background: linear-gradient(135deg, rgba(245, 158, 11, 0.2) 0%, rgba(245, 158, 11, 0.1) 100%);
+            color: #fcd34d;
+        }
+
+        &.reservado {
+            background: linear-gradient(135deg, rgba(59, 130, 246, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+            color: #93c5fd;
+        }
+    }
+
+    .empty-state {
+        .empty-icon {
+            background: linear-gradient(135deg, rgba(99, 102, 241, 0.2) 0%, rgba(99, 102, 241, 0.1) 100%);
+
+            i {
+                color: #a5b4fc;
+            }
+        }
+
+        h3 {
+            color: #f1f5f9;
+        }
+
+        p {
+            color: #94a3b8;
+        }
+    }
+
+    .loading-container {
+        .loading-text {
+            color: #94a3b8;
+        }
+    }
+
+    // Dialog Dark Mode
+    ::ng-deep .nicho-dialog {
+        .p-dialog {
+            background: #1e1e2e !important;
+        }
+
+        .p-dialog-content {
+            background: #1e1e2e !important;
+        }
+
+        .p-dialog-footer {
+            background: #1e1e2e !important;
+            border-top-color: rgba(255, 255, 255, 0.1);
+        }
+    }
+
+    .dialog-content {
+        .detail-item {
+            .detail-label {
+                color: #94a3b8;
+            }
+
+            .detail-value {
+                color: #f1f5f9;
+            }
+        }
+
+        .divider {
+            background: linear-gradient(90deg, transparent, rgba(255, 255, 255, 0.1), transparent);
+        }
+
+        .ocupante-section {
+            background: rgba(255, 255, 255, 0.05);
+
+            h4 {
+                color: #e2e8f0;
+
+                i {
+                    color: #a78bfa;
+                }
+            }
+        }
+    }
+}
