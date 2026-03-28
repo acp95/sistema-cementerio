@@ -81,6 +81,7 @@ export class SectoresService {
     async findAll(): Promise<Sector[]> {
         return await this.sectoresRepository.find({
             relations: ['espacios'],
+            order: { id: 'DESC' },
         });
     }
 

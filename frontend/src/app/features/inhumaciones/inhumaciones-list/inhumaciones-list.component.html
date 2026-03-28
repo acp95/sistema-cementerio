@@ -7,7 +7,8 @@
         </ng-template>
 
         <ng-template #end>
-            <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+            <p-button label="Excel" icon="pi pi-file-excel" severity="success" class="mr-2" (onClick)="exportExcel()" />
+            <p-button label="PDF" icon="pi pi-file-pdf" severity="danger" class="mr-2" (onClick)="exportPdf()" />
         </ng-template>
     </p-toolbar>
 
@@ -27,6 +28,9 @@
         </ng-template>
         <ng-template #header>
             <tr>
+                <th pSortableColumn="id" style="min-width:9rem">
+                    N° Inhum. <p-sortIcon field="id" />
+                </th>
                 <th pSortableColumn="difunto.nombres" style="min-width:14rem">
                     Difunto <p-sortIcon field="difunto.nombres" />
                 </th>
@@ -44,6 +48,7 @@
         </ng-template>
         <ng-template #body let-inh>
             <tr>
+                <td class="font-bold">N° {{ inh.id | number:'5.0-0' }}</td>
                 <td>{{ inh.difunto?.nombres || '-' }} {{ inh.difunto?.apellidos || '' }}</td>
                 <td>{{ inh.espacio?.codigo || '-' }}</td>
                 <td>{{ inh.fechaInhumacion | date:'dd/MM/yyyy' }}</td>
@@ -78,13 +83,21 @@
                     <small class="text-red-500" *ngIf="submitted && !inhumacion.difuntoId">Difunto requerido.</small>
                 </div>
 
-                <!-- Espacio -->
-                <div>
-                    <label for="espacioId" class="block font-bold mb-3">Espacio *</label>
-                    <p-select id="espacioId" name="espacioId" [(ngModel)]="inhumacion.espacioId" [options]="espacios"
-                        optionLabel="label" optionValue="value" placeholder="Seleccione Espacio" [filter]="true"
-                        appendTo="body" styleClass="w-full" />
-                    <small class="text-red-500" *ngIf="submitted && !inhumacion.espacioId">Espacio requerido.</small>
+                <!-- Filtro de Sector & Espacio -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="sectorId" class="block font-bold mb-3">Sector (Opcional)</label>
+                        <p-select id="sectorId" name="sectorId" [(ngModel)]="inhumacion.sectorId" [options]="sectores"
+                            optionLabel="label" optionValue="value" placeholder="Filtrar por Sector..." [filter]="true"
+                            appendTo="body" styleClass="w-full" [showClear]="true" (onChange)="onSectorChange($event.value)" />
+                    </div>
+                    <div>
+                        <label for="espacioId" class="block font-bold mb-3">Espacio *</label>
+                        <p-select id="espacioId" name="espacioId" [(ngModel)]="inhumacion.espacioId" [options]="espacios"
+                            optionLabel="label" optionValue="value" placeholder="Seleccione Espacio" [filter]="true"
+                            appendTo="body" styleClass="w-full" (onChange)="onEspacioChange($event.value)" />
+                        <small class="text-red-500" *ngIf="submitted && !inhumacion.espacioId">Espacio requerido.</small>
+                    </div>
                 </div>
 
                 <!-- Titular -->
@@ -111,19 +124,22 @@
                     </div>
                 </div>
 
-                <!-- Tipo de Concesión -->
-                <div>
-                    <label for="tipoConcesion" class="block font-bold mb-3">Tipo de Concesión</label>
-                    <p-select id="tipoConcesion" name="tipoConcesion" [(ngModel)]="inhumacion.tipoConcesion"
-                        [options]="tiposConcesion" optionLabel="label" optionValue="value" placeholder="Seleccione Tipo"
-                        appendTo="body" styleClass="w-full" />
-                </div>
-
-                <!-- Fecha de Vencimiento -->
-                <div>
-                    <label for="fechaVencimiento" class="block font-bold mb-3">Fecha de Vencimiento</label>
-                    <p-datepicker id="fechaVencimiento" [(ngModel)]="inhumacion.fechaVencimiento" dateFormat="dd/mm/yy"
-                        [showIcon]="true" fluid />
+                <!-- Tipo de Concesión y Fecha de Vencimiento -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div>
+                        <label for="tipoConcesion" class="block font-bold mb-3">Tipo de Concesión</label>
+                        <p-select id="tipoConcesion" name="tipoConcesion" [(ngModel)]="inhumacion.tipoConcesion"
+                            [options]="tiposConcesion" optionLabel="label" optionValue="value" placeholder="Seleccione Tipo"
+                            appendTo="body" styleClass="w-full" (onChange)="onTipoConcesionChange($event.value)" />
+                    </div>
+                    <div>
+                        <label for="fechaVencimiento" class="block font-bold mb-3" [class.text-gray-400]="inhumacion.tipoConcesion === 'PERPETUA'">
+                            Fecha de Vencimiento
+                        </label>
+                        <p-datepicker id="fechaVencimiento" [(ngModel)]="inhumacion.fechaVencimiento" dateFormat="dd/mm/yy"
+                            [showIcon]="true" fluid [disabled]="inhumacion.tipoConcesion === 'PERPETUA'" />
+                        <small class="text-gray-500" *ngIf="inhumacion.tipoConcesion === 'PERPETUA'">No aplica para concesiones perpetuas.</small>
+                    </div>
                 </div>
 
                 <!-- Estado -->
@@ -143,13 +159,13 @@
                 <!-- Concepto de Pago (solo para nueva inhumación) -->
                 <div *ngIf="!inhumacion.id">
                     <label for="conceptoPagoId" class="block font-bold mb-3">
-                        <i class="pi pi-money-bill mr-2"></i>Concepto de Pago
+                        <i class="pi pi-money-bill mr-2"></i>Concepto de Pago *
                     </label>
                     <p-select id="conceptoPagoId" name="conceptoPagoId" [(ngModel)]="inhumacion.conceptoPagoId"
                         [options]="conceptosPago" optionLabel="label" optionValue="value"
-                        placeholder="Seleccione para generar pago automático" [filter]="true" appendTo="body"
+                        placeholder="Seleccione concepto de pago" [filter]="true" appendTo="body"
                         styleClass="w-full" />
-                    <small class="text-gray-500">Si selecciona un concepto, se generará un pago automáticamente</small>
+                    <small class="text-red-500" *ngIf="submitted && !inhumacion.conceptoPagoId">Concepto de pago requerido.</small>
                 </div>
 
                 <!-- Pagos Asociados (solo al editar) -->

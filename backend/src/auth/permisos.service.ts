@@ -12,7 +12,7 @@ export class PermisosService {
 
     async findAll(): Promise<Permiso[]> {
         return await this.permisoRepository.find({
-            order: { slug: 'ASC' },
+            order: { id: 'DESC' },
         });
     }
 

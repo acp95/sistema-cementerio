@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { SectoresService } from '../../../core/services/sectores.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ExportService } from '../../../core/services/export.service';
 import { Sector } from '@/core/models/infraestructura.model';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Observable, tap, catchError, of } from 'rxjs';
@@ -52,12 +53,14 @@ import { InputIconModule } from 'primeng/inputicon';
 export class SectoresListComponent implements OnInit {
     private sectoresService = inject(SectoresService);
     public authService = inject(AuthService);
+    private exportService = inject(ExportService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
     private router = inject(Router);
     private cdr = inject(ChangeDetectorRef);
 
     sectores$!: Observable<Sector[]>;
+    sectoresCurrent: Sector[] = [];
     sectorDialog: boolean = false;
     sector!: Partial<Sector>;
     submitted: boolean = false;
@@ -71,13 +74,36 @@ export class SectoresListComponent implements OnInit {
 
     loadSectores(): void {
         this.sectores$ = this.sectoresService.getAll().pipe(
-            tap(data => console.log('Sectores loaded:', data.length)),
+            tap(data => {
+                this.sectoresCurrent = data;
+                console.log('Sectores loaded:', data.length);
+            }),
             catchError(error => {
                 console.error('Error loading sectores:', error);
                 this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudieron cargar los sectores' });
                 return of([]);
             })
         );
+    }
+
+    exportPdf() {
+        const cols = [
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Descripción', dataKey: 'descripcion' },
+            { header: 'Tipo', dataKey: 'tipoEspacio' },
+            { header: 'Capacidad', dataKey: 'capacidadTotal' }
+        ];
+        this.exportService.exportPdf(cols, this.sectoresCurrent, 'Sectores', 'Reporte de Sectores');
+    }
+
+    exportExcel() {
+        const exportData = this.sectoresCurrent.map(s => ({
+            'Nombre': s.nombre,
+            'Descripción': s.descripcion,
+            'Tipo': s.tipoEspacio,
+            'Capacidad': s.capacidadTotal
+        }));
+        this.exportService.exportExcel(exportData, 'Sectores');
     }
 
     openNew(): void {

@@ -30,6 +30,8 @@ export class EspaciosService {
             query.andWhere('espacio.estado = :estado', { estado: filters.estado });
         }
 
+        query.orderBy('espacio.id', 'DESC');
+
         return await query.getMany();
     }
 
@@ -113,6 +115,24 @@ export class EspaciosService {
     async remove(id: number): Promise<void> {
         const espacio = await this.findOne(id);
         await this.espaciosRepository.remove(espacio);
+    }
+
+    /**
+     * Marca un espacio como OCUPADO (usado al registrar una inhumación)
+     */
+    async marcarOcupado(id: number): Promise<Espacio> {
+        const espacio = await this.findOne(id);
+        espacio.estado = EstadoEspacio.OCUPADO;
+        return await this.espaciosRepository.save(espacio);
+    }
+
+    /**
+     * Marca un espacio como LIBRE (usado al eliminar una inhumación)
+     */
+    async marcarLibre(id: number): Promise<Espacio> {
+        const espacio = await this.findOne(id);
+        espacio.estado = EstadoEspacio.LIBRE;
+        return await this.espaciosRepository.save(espacio);
     }
 
     /**

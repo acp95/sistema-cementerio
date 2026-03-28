@@ -21,6 +21,7 @@ import { PagosService } from '../../../core/services/pagos.service';
 import { TitularesService } from '../../../core/services/titulares.service';
 import { ConceptosPagoService } from '../../../core/services/conceptos-pago.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ExportService } from '../../../core/services/export.service';
 import { Observable, tap } from 'rxjs';
 
 @Component({
@@ -53,6 +54,7 @@ export class PagosListComponent implements OnInit {
     private titularesService = inject(TitularesService);
     private conceptosService = inject(ConceptosPagoService);
     public authService = inject(AuthService);
+    private exportService = inject(ExportService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
     private cdr = inject(ChangeDetectorRef);
@@ -88,12 +90,49 @@ export class PagosListComponent implements OnInit {
         { label: 'Depósito', value: 'DEPOSITO' }
     ];
 
+    exportPdf() {
+        const exportData = this.pagos.map(p => ({
+            ...p,
+            reciboExport: p.codigoRecibo || '-',
+            fechaExport: p.fechaPago ? new Date(p.fechaPago).toLocaleDateString() : '-',
+            titularExport: p.titular ? `${p.titular.nombres} ${p.titular.apellidos}` : '-',
+            difuntoExport: p.inhumacion?.difunto ? `${p.inhumacion.difunto.nombres} ${p.inhumacion.difunto.apellidos}` : '-',
+            conceptoExport: p.detalles?.length > 0 ? p.detalles[0].concepto?.nombre + (p.detalles.length > 1 ? ` (+${p.detalles.length - 1})` : '') : '-',
+            montoExport: `S/. ${Number(p.montoTotal || 0).toFixed(2)}`
+        }));
+        const cols = [
+            { header: 'N° Recibo', dataKey: 'reciboExport' },
+            { header: 'Fecha', dataKey: 'fechaExport' },
+            { header: 'Titular', dataKey: 'titularExport' },
+            { header: 'Difunto', dataKey: 'difuntoExport' },
+            { header: 'Concepto', dataKey: 'conceptoExport' },
+            { header: 'Monto Total', dataKey: 'montoExport' },
+            { header: 'Estado', dataKey: 'estado' },
+            { header: 'Método', dataKey: 'metodoPago' }
+        ];
+        this.exportService.exportPdf(cols, exportData, 'Pagos', 'Reporte de Caja');
+    }
+
+    exportExcel() {
+        const exportData = this.pagos.map(p => ({
+            'N° Recibo': p.codigoRecibo || '-',
+            'Fecha': p.fechaPago ? new Date(p.fechaPago).toLocaleDateString() : '-',
+            'Titular': p.titular ? `${p.titular.nombres} ${p.titular.apellidos}` : '-',
+            'Difunto': p.inhumacion?.difunto ? `${p.inhumacion.difunto.nombres} ${p.inhumacion.difunto.apellidos}` : '-',
+            'Concepto': p.detalles?.length > 0 ? p.detalles[0].concepto?.nombre + (p.detalles.length > 1 ? ` (+${p.detalles.length - 1})` : '') : '-',
+            'Monto Total': `S/. ${Number(p.montoTotal || 0).toFixed(2)}`,
+            'Estado': p.estado,
+            'Método Pago': p.metodoPago
+        }));
+        this.exportService.exportExcel(exportData, 'Pagos');
+    }
+
     loadPagos() {
         this.pagosService.getAll().subscribe({
             next: (data) => {
-                this.pagos = data;
+                this.pagos = [...data];
                 this.cdr.detectChanges();
-                console.log('Pagos loaded:', data.length);
+                console.log('Pagos loaded:', this.pagos.length);
             },
             error: (error) => {
                 console.error('Error loading pagos:', error);
@@ -265,7 +304,8 @@ export class PagosListComponent implements OnInit {
                 console.log('Accept clicked, updating pago...');
                 const updateDto = {
                     estado: 'PAGADO',
-                    fechaPago: new Date()
+                    fechaPago: new Date(),
+                    usuarioId: this.authService.currentUser()?.id
                 };
                 this.pagosService.update(pago.id, updateDto).subscribe({
                     next: () => {

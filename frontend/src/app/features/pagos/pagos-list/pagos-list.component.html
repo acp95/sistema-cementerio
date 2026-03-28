@@ -7,7 +7,8 @@
         </ng-template>
 
         <ng-template #end>
-            <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+            <p-button label="Excel" icon="pi pi-file-excel" severity="success" class="mr-2" (onClick)="exportExcel()" />
+            <p-button label="PDF" icon="pi pi-file-pdf" severity="danger" class="mr-2" (onClick)="exportPdf()" />
         </ng-template>
     </p-toolbar>
 
@@ -78,16 +79,16 @@
                 <td>
                     <p-button *ngIf="pago.estado === 'PENDIENTE' && authService.hasPermission('actualizar_pagos')"
                         icon="pi pi-money-bill" label="Cobrar" severity="success" class="mr-2" [rounded]="true"
-                        size="small" (click)="cobrarPago(pago)" pTooltip="Registrar cobro" />
+                        size="small" (onClick)="cobrarPago(pago)" pTooltip="Registrar cobro" />
                     <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="editPago(pago)" pTooltip="Editar"
+                        (onClick)="editPago(pago)" pTooltip="Editar"
                         *ngIf="pago.estado !== 'ANULADO' && authService.hasPermission('actualizar_pagos')" />
                     <p-button *ngIf="pago.estado !== 'ANULADO'" icon="pi pi-print" severity="secondary" class="mr-2"
-                        [rounded]="true" size="small" [text]="true" (click)="imprimirRecibo(pago)"
+                        [rounded]="true" size="small" [text]="true" (onClick)="imprimirRecibo(pago)"
                         pTooltip="Imprimir Recibo" />
                     <p-button *ngIf="pago.estado !== 'ANULADO' && authService.hasPermission('anular_pagos')"
                         icon="pi pi-ban" label="Anular" severity="danger" class="mr-2" [rounded]="true" size="small"
-                        (click)="anularPago(pago)" pTooltip="Anular pago" />
+                        (onClick)="anularPago(pago)" pTooltip="Anular pago" />
                 </td>
             </tr>
         </ng-template>

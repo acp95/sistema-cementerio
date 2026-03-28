@@ -3,8 +3,8 @@ import { TypeOrmModule } from '@nestjs/typeorm';
 import { Titular } from './entities/titular.entity';
 import { Difunto } from './entities/difunto.entity';
 import { Inhumacion } from './entities/inhumacion.entity';
-import { Espacio } from '../infraestructura/entities/espacio.entity';
 import { TitularesService } from './titulares.service';
+import { InfraestructuraModule } from '../infraestructura/infraestructura.module';
 import { DifuntosService } from './difuntos.service';
 import { InhumacionesService } from './inhumaciones.service';
 import { TitularesController } from './titulares.controller';
@@ -14,7 +14,8 @@ import { CajaModule } from '../caja/caja.module';
 
 @Module({
     imports: [
-        TypeOrmModule.forFeature([Titular, Difunto, Inhumacion, Espacio]),
+        TypeOrmModule.forFeature([Titular, Difunto, Inhumacion]),
+        InfraestructuraModule,
         forwardRef(() => CajaModule),
     ],
     controllers: [TitularesController, DifuntosController, InhumacionesController],

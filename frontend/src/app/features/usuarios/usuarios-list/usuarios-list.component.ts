@@ -17,6 +17,7 @@ import { InputIconModule } from 'primeng/inputicon';
 import { UsuariosService } from '../../../core/services/usuarios.service';
 import { RolesService } from '../../../core/services/roles.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ExportService } from '../../../core/services/export.service';
 import { Observable, tap, catchError, of } from 'rxjs';
 
 @Component({
@@ -45,6 +46,7 @@ export class UsuariosListComponent implements OnInit {
     private usuariosService = inject(UsuariosService);
     private rolesService = inject(RolesService);
     public authService = inject(AuthService);
+    private exportService = inject(ExportService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
     private cdr = inject(ChangeDetectorRef);
@@ -61,6 +63,33 @@ export class UsuariosListComponent implements OnInit {
     ngOnInit() {
         this.loadUsuarios();
         this.loadRoles();
+    }
+
+    exportPdf() {
+        const exportData = this.usuarios.map(u => ({
+            ...u,
+            rolNombre: u.rol?.nombre || '-',
+            estado: u.activo ? 'Activo' : 'Inactivo'
+        }));
+        const cols = [
+            { header: 'Usuario', dataKey: 'username' },
+            { header: 'Nombre Completo', dataKey: 'nombreCompleto' },
+            { header: 'Email', dataKey: 'email' },
+            { header: 'Rol', dataKey: 'rolNombre' },
+            { header: 'Estado', dataKey: 'estado' }
+        ];
+        this.exportService.exportPdf(cols, exportData, 'Usuarios', 'Reporte de Usuarios');
+    }
+
+    exportExcel() {
+        const exportData = this.usuarios.map(u => ({
+            'Usuario': u.username,
+            'Nombre Completo': u.nombreCompleto,
+            'Email': u.email || '-',
+            'Rol': u.rol?.nombre || '-',
+            'Estado': u.activo ? 'Activo' : 'Inactivo'
+        }));
+        this.exportService.exportExcel(exportData, 'Usuarios');
     }
 
     loadUsuarios() {

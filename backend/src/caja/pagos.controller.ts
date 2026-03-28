@@ -4,7 +4,6 @@ import {
     Post,
     Body,
     Param,
-    Put,
     ParseIntPipe,
     Patch,
 } from '@nestjs/common';
@@ -32,16 +31,8 @@ export class PagosController {
         return this.pagosService.findAll();
     }
 
-    @Put(':id')
-    @ApiOperation({ summary: 'Actualizar un pago (PUT)' })
-    @ApiParam({ name: 'id', description: 'ID del pago' })
-    @ApiResponse({ status: 200, description: 'Pago actualizado' })
-    updatePut(@Param('id', ParseIntPipe) id: number, @Body() updatePagoDto: UpdatePagoDto) {
-        return this.pagosService.update(id, updatePagoDto);
-    }
-
     @Patch(':id')
-    @ApiOperation({ summary: 'Actualizar un pago (PATCH)' })
+    @ApiOperation({ summary: 'Actualizar un pago' })
     @ApiParam({ name: 'id', description: 'ID del pago' })
     @ApiResponse({ status: 200, description: 'Pago actualizado' })
     update(@Param('id', ParseIntPipe) id: number, @Body() updatePagoDto: UpdatePagoDto) {

@@ -15,7 +15,7 @@ export class Sector {
     @Column({ type: 'varchar', length: 50, nullable: true })
     tipo: string;
 
-    @Column({ name: 'tipo_espacio', type: 'varchar', length: 20, default: 'nicho' })
+    @Column({ name: 'tipo_espacio', type: 'varchar', length: 20, default: 'NICHO' })
     tipoEspacio: string;
 
     @Column({ name: 'capacidad_total', type: 'int', default: 0 })

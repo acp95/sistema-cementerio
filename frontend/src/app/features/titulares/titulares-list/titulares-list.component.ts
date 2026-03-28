@@ -3,6 +3,7 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { TitularesService } from '../../../core/services/titulares.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ExportService } from '../../../core/services/export.service';
 import { MessageService, ConfirmationService } from 'primeng/api';
 
 // PrimeNG Imports
@@ -44,6 +45,7 @@ export class TitularesListComponent implements OnInit {
     public authService = inject(AuthService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
+    private exportService = inject(ExportService);
     private cdr = inject(ChangeDetectorRef);
 
     titulares: any[] = [];
@@ -52,9 +54,26 @@ export class TitularesListComponent implements OnInit {
     submitted: boolean = false;
 
     @ViewChild('dt') dt!: Table;
+    exportCols: any[] = [];
 
     ngOnInit(): void {
         this.loadTitulares();
+        this.exportCols = [
+            { header: 'Nombres', dataKey: 'nombres' },
+            { header: 'Apellidos', dataKey: 'apellidos' },
+            { header: 'DNI', dataKey: 'dni' },
+            { header: 'Teléfono', dataKey: 'telefono' },
+            { header: 'Email', dataKey: 'email' },
+            { header: 'Dirección', dataKey: 'direccion' }
+        ];
+    }
+
+    exportPdf() {
+        this.exportService.exportPdf(this.exportCols, this.titulares, 'Titulares', 'Reporte de Titulares');
+    }
+
+    exportExcel() {
+        this.exportService.exportExcel(this.titulares, 'Titulares');
     }
 
     loadTitulares(): void {
@@ -126,7 +145,14 @@ export class TitularesListComponent implements OnInit {
                         this.loadTitulares();
                         this.hideDialog();
                     },
-                    error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la actualización' })
+                    error: (err) => {
+                        if (err.status === 409) {
+                            const mensaje = err.error?.message || 'Ya existe otro titular con esos datos.';
+                            this.messageService.add({ severity: 'warn', summary: '⚠️ Advertencia', detail: mensaje, life: 5000 });
+                        } else {
+                            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la actualización' });
+                        }
+                    }
                 });
             } else {
                 this.titularesService.create(this.titular).subscribe({
@@ -135,7 +161,14 @@ export class TitularesListComponent implements OnInit {
                         this.loadTitulares();
                         this.hideDialog();
                     },
-                    error: () => this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la creación' })
+                    error: (err) => {
+                        if (err.status === 409) {
+                            const mensaje = err.error?.message || 'Ya existe otro titular con esos datos.';
+                            this.messageService.add({ severity: 'warn', summary: '⚠️ Advertencia', detail: mensaje, life: 5000 });
+                        } else {
+                            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la creación' });
+                        }
+                    }
                 });
             }
         }

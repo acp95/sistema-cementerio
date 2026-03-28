@@ -33,7 +33,7 @@ export interface Espacio {
     numero?: string;
     tipo: 'nicho' | 'fosa';
     ubicacion: string;
-    estado: 'disponible' | 'ocupado' | 'mantenimiento';
+    estado: 'LIBRE' | 'OCUPADO' | 'MANTENIMIENTO';
     precioAnual: number;
     createdAt: Date;
     updatedAt: Date;
@@ -47,7 +47,7 @@ export interface CreateEspacioDto {
     numero?: string;
     tipo: 'nicho' | 'fosa';
     ubicacion: string;
-    estado?: 'disponible' | 'ocupado' | 'mantenimiento';
+    estado?: 'LIBRE' | 'OCUPADO' | 'MANTENIMIENTO';
     precioAnual: number;
 }
 

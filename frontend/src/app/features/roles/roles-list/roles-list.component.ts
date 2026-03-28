@@ -17,6 +17,7 @@ import { MultiSelectModule } from 'primeng/multiselect';
 import { RolesService } from '../../../core/services/roles.service';
 import { PermisosService, Permiso } from '../../../core/services/permisos.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ExportService } from '../../../core/services/export.service';
 import { RolePermissionsDialogComponent } from '../role-permissions-dialog/role-permissions-dialog.component';
 
 @Component({
@@ -46,6 +47,7 @@ export class RolesListComponent implements OnInit {
     private rolesService = inject(RolesService);
     private permisosService = inject(PermisosService);
     public authService = inject(AuthService);
+    private exportService = inject(ExportService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
     private cdr = inject(ChangeDetectorRef);
@@ -68,6 +70,28 @@ export class RolesListComponent implements OnInit {
     ngOnInit() {
         this.loadRoles();
         this.loadPermisos();
+    }
+
+    exportPdf() {
+        const exportData = this.roles.map(r => ({
+            ...r,
+            estado: r.activo ? 'Activo' : 'Inactivo'
+        }));
+        const cols = [
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Descripción', dataKey: 'descripcion' },
+            { header: 'Estado', dataKey: 'estado' }
+        ];
+        this.exportService.exportPdf(cols, exportData, 'Roles', 'Reporte de Roles');
+    }
+
+    exportExcel() {
+        const exportData = this.roles.map(r => ({
+            'Nombre': r.nombre,
+            'Descripción': r.descripcion || '-',
+            'Estado': r.activo ? 'Activo' : 'Inactivo'
+        }));
+        this.exportService.exportExcel(exportData, 'Roles');
     }
 
     loadRoles() {

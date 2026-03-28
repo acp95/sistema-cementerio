@@ -66,8 +66,8 @@ export class DashboardComponent implements OnInit {
             this.pagosService.getAll().toPromise()
         ]).then(([sectores, espacios, pagos]) => {
             const totalEspacios = espacios?.length || 0;
-            const espaciosOcupados = espacios?.filter(e => e.estado === 'ocupado').length || 0;
-            const espaciosDisponibles = espacios?.filter(e => e.estado === 'disponible').length || 0;
+            const espaciosOcupados = espacios?.filter(e => e.estado === 'OCUPADO').length || 0;
+            const espaciosDisponibles = espacios?.filter(e => e.estado === 'LIBRE').length || 0;
 
             this.stats.set({
                 totalEspacios,

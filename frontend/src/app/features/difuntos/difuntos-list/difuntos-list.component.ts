@@ -3,10 +3,8 @@ import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { DifuntosService } from '../../../core/services/difuntos.service';
 import { TitularesService } from '../../../core/services/titulares.service';
-import { EspaciosService } from '../../../core/services/espacios.service';
-import { InhumacionesService } from '../../../core/services/inhumaciones.service';
-import { ConceptosPagoService } from '../../../core/services/conceptos-pago.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ExportService } from '../../../core/services/export.service';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Observable, tap, catchError, of } from 'rxjs';
 
@@ -53,32 +51,17 @@ import { FormsModule } from '@angular/forms';
 export class DifuntosListComponent implements OnInit {
     private difuntosService = inject(DifuntosService);
     private titularesService = inject(TitularesService);
-    private espaciosService = inject(EspaciosService);
-    private inhumacionesService = inject(InhumacionesService);
-    private conceptosPagoService = inject(ConceptosPagoService);
     public authService = inject(AuthService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
+    private exportService = inject(ExportService);
     private cdr = inject(ChangeDetectorRef);
 
     difuntos: any[] = [];
+    titulares: any[] = [];
     difuntoDialog: boolean = false;
     difunto: any = {};
     submitted: boolean = false;
-
-    // Opciones para inhumación
-    espacios: any[] = [];
-    titulares: any[] = [];
-    conceptosPago: any[] = [];
-    tiposConcesion = [
-        { label: 'Temporal', value: 'TEMPORAL' },
-        { label: 'Perpetua', value: 'PERPETUA' }
-    ];
-    estadosInhumacion = [
-        { label: 'Activo', value: 'ACTIVO' },
-        { label: 'Exhumado', value: 'EXHUMADO' },
-        { label: 'Trasladado', value: 'TRASLADADO' }
-    ];
 
     sexoOptions = [
         { label: 'Masculino', value: 'M' },
@@ -89,23 +72,35 @@ export class DifuntosListComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadDifuntos();
-        this.loadEspacios();
         this.loadTitulares();
-        this.loadConceptosPago();
     }
 
-    loadEspacios(): void {
-        this.espaciosService.getAll().subscribe({
-            next: (data) => {
-                this.espacios = data
-                    .filter((e: any) => e.estado === 'LIBRE')
-                    .map((e: any) => ({
-                        label: `${e.codigo || 'S/C'} - ${e.tipoEspacio || 'No definido'}`,
-                        value: e.id
-                    }));
-            },
-            error: (error) => console.error('Error loading espacios:', error)
-        });
+    exportPdf() {
+        const exportData = this.difuntos.map(d => ({
+            ...d,
+            sexo: d.sexo === 'M' ? 'Masculino' : 'Femenino',
+            fechaDefuncion: d.fechaDefuncion ? new Date(d.fechaDefuncion).toLocaleDateString() : '-',
+            titularExport: d.titular ? `${d.titular.nombres} ${d.titular.apellidos}` : '-'
+        }));
+        const cols = [
+            { header: 'Nombres', dataKey: 'nombres' },
+            { header: 'Apellidos', dataKey: 'apellidos' },
+            { header: 'DNI', dataKey: 'dni' },
+            { header: 'Sexo', dataKey: 'sexo' },
+            { header: 'F. Defunción', dataKey: 'fechaDefuncion' },
+            { header: 'Titular', dataKey: 'titularExport' }
+        ];
+        this.exportService.exportPdf(cols, exportData, 'Difuntos', 'Reporte de Difuntos');
+    }
+
+    exportExcel() {
+        const exportData = this.difuntos.map(d => ({
+            ...d,
+            sexo: d.sexo === 'M' ? 'Masculino' : 'Femenino',
+            fechaDefuncion: d.fechaDefuncion ? new Date(d.fechaDefuncion).toLocaleDateString() : '-',
+            titularExport: d.titular ? `${d.titular.nombres} ${d.titular.apellidos}` : '-'
+        }));
+        this.exportService.exportExcel(exportData, 'Difuntos');
     }
 
     loadTitulares(): void {
@@ -134,26 +129,8 @@ export class DifuntosListComponent implements OnInit {
         });
     }
 
-    loadConceptosPago(): void {
-        this.conceptosPagoService.getAll().subscribe({
-            next: (data) => {
-                this.conceptosPago = data.filter((c: any) => c.activo).map((c: any) => ({
-                    label: `${c.nombre} - S/. ${c.precioBase}`,
-                    value: c.id
-                }));
-            },
-            error: (error) => console.error('Error loading conceptos de pago:', error)
-        });
-    }
-
     openNew(): void {
-        this.difunto = {
-            inhumacionData: {
-                fechaInhumacion: new Date(),
-                tipoConcesion: 'TEMPORAL',
-                estado: 'ACTIVO'
-            }
-        };
+        this.difunto = {};
         this.submitted = false;
         this.difuntoDialog = true;
     }
@@ -165,26 +142,8 @@ export class DifuntosListComponent implements OnInit {
         if (this.difunto.fechaNacimiento) this.difunto.fechaNacimiento = new Date(this.difunto.fechaNacimiento);
         if (this.difunto.fechaDefuncion) this.difunto.fechaDefuncion = new Date(this.difunto.fechaDefuncion);
 
-        // Load inhumacion data if exists
-        if (this.difunto.inhumacion) {
-            this.difunto.inhumacionData = {
-                espacioId: this.difunto.inhumacion.espacioId || this.difunto.inhumacion.espacio?.id,
-                titularId: this.difunto.inhumacion.titularId || this.difunto.inhumacion.titular?.id,
-                fechaInhumacion: this.difunto.inhumacion.fechaInhumacion ? new Date(this.difunto.inhumacion.fechaInhumacion) : null,
-                horaInhumacion: this.difunto.inhumacion.horaInhumacion,
-                tipoConcesion: this.difunto.inhumacion.tipoConcesion,
-                fechaVencimiento: this.difunto.inhumacion.fechaVencimiento ? new Date(this.difunto.inhumacion.fechaVencimiento) : null,
-                estado: this.difunto.inhumacion.estado,
-                numeroActa: this.difunto.inhumacion.numeroActa,
-                observaciones: this.difunto.inhumacion.observaciones
-            };
-        } else {
-            // Initialize empty inhumacionData if no inhumacion exists
-            this.difunto.inhumacionData = {
-                fechaInhumacion: new Date(),
-                tipoConcesion: 'TEMPORAL',
-                estado: 'ACTIVO'
-            };
+        if (this.difunto.titular) {
+            this.difunto.titularId = this.difunto.titular.id;
         }
 
         this.difuntoDialog = true;
@@ -231,7 +190,8 @@ export class DifuntosListComponent implements OnInit {
                     actaDefuncion: this.difunto.actaDefuncion,
                     sexo: this.difunto.sexo,
                     causaMuerte: this.difunto.causaMuerte,
-                    observaciones: this.difunto.observaciones
+                    observaciones: this.difunto.observaciones,
+                    titularId: this.difunto.titularId
                 };
                 this.difuntosService.update(this.difunto.id, updateDto).subscribe({
                     next: () => {
@@ -241,11 +201,16 @@ export class DifuntosListComponent implements OnInit {
                     },
                     error: (err) => {
                         console.error('Error updating difunto:', err);
-                        this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la actualización' });
+                        if (err.status === 409) {
+                            const mensaje = err.error?.message || 'Ya existe un registro con estos datos únicos (DNI o Acta de Defunción).';
+                            this.messageService.add({ severity: 'warn', summary: '⚠️ Advertencia', detail: mensaje, life: 5000 });
+                        } else {
+                            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la actualización' });
+                        }
                     }
                 });
             } else {
-                // Create - send difunto + inhumacion data
+                // Create - send difunto data
                 const createDto: any = {
                     nombres: this.difunto.nombres,
                     apellidos: this.difunto.apellidos,
@@ -256,11 +221,7 @@ export class DifuntosListComponent implements OnInit {
                     sexo: this.difunto.sexo,
                     causaMuerte: this.difunto.causaMuerte,
                     observaciones: this.difunto.observaciones,
-                    inhumacionData: {
-                        ...this.difunto.inhumacionData,
-                        conceptoPagoId: this.difunto.inhumacionData?.conceptoPagoId,
-                        usuarioId: this.authService.getCurrentUser()?.id
-                    }
+                    titularId: this.difunto.titularId
                 };
 
                 this.difuntosService.create(createDto).subscribe({
@@ -268,7 +229,7 @@ export class DifuntosListComponent implements OnInit {
                         this.messageService.add({
                             severity: 'success',
                             summary: 'Exitoso',
-                            detail: 'Difunto e Inhumación creados correctamente',
+                            detail: 'Difunto creado correctamente',
                             life: 3000
                         });
                         this.loadDifuntos();

@@ -1,4 +1,5 @@
-import { Entity, Column, PrimaryGeneratedColumn, OneToOne } from 'typeorm';
+import { Entity, Column, PrimaryGeneratedColumn, OneToOne, ManyToOne, JoinColumn } from 'typeorm';
+import { Titular } from './titular.entity';
 
 @Entity('difuntos')
 export class Difunto {
@@ -34,4 +35,8 @@ export class Difunto {
 
     @OneToOne('Inhumacion', 'difunto')
     inhumacion: any;
+
+    @ManyToOne(() => Titular, (titular) => titular.difuntos, { nullable: true })
+    @JoinColumn({ name: 'titular_id' })
+    titular: Titular;
 }

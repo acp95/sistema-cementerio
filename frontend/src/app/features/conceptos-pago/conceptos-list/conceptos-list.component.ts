@@ -2,6 +2,7 @@ import { Component, OnInit, inject, signal, ViewChild, ChangeDetectorRef } from 
 import { CommonModule } from '@angular/common';
 import { ConceptosPagoService } from '../../../core/services/conceptos-pago.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ExportService } from '../../../core/services/export.service';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Table, TableModule } from 'primeng/table';
 import { ButtonModule } from 'primeng/button';
@@ -47,6 +48,7 @@ import { FormsModule } from '@angular/forms';
 export class ConceptosListComponent implements OnInit {
     private conceptosService = inject(ConceptosPagoService);
     public authService = inject(AuthService);
+    private exportService = inject(ExportService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
     private cdr = inject(ChangeDetectorRef);
@@ -72,6 +74,32 @@ export class ConceptosListComponent implements OnInit {
 
     ngOnInit(): void {
         this.loadConceptos();
+    }
+
+    exportPdf() {
+        const exportData = this.conceptos.map(c => ({
+            ...c,
+            precioFormat: `S/. ${Number(c.precioBase || 0).toFixed(2)}`,
+            periodicoStr: c.esPeriodico ? 'Sí' : 'No',
+            estado: c.activo ? 'Activo' : 'Inactivo'
+        }));
+        const cols = [
+            { header: 'Nombre', dataKey: 'nombre' },
+            { header: 'Precio Base', dataKey: 'precioFormat' },
+            { header: 'Periódico', dataKey: 'periodicoStr' },
+            { header: 'Estado', dataKey: 'estado' }
+        ];
+        this.exportService.exportPdf(cols, exportData, 'Conceptos', 'Reporte de Conceptos de Pago');
+    }
+
+    exportExcel() {
+        const exportData = this.conceptos.map(c => ({
+            'Nombre': c.nombre,
+            'Precio Base': `S/. ${Number(c.precioBase || 0).toFixed(2)}`,
+            'Periódico': c.esPeriodico ? 'Sí' : 'No',
+            'Estado': c.activo ? 'Activo' : 'Inactivo'
+        }));
+        this.exportService.exportExcel(exportData, 'Conceptos');
     }
 
     loadConceptos(): void {

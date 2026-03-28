@@ -33,6 +33,7 @@ export class TitularesService {
     async findAll(): Promise<Titular[]> {
         return await this.titularesRepository.find({
             relations: ['inhumaciones'],
+            order: { id: 'DESC' },
         });
     }
 

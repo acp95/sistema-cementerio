@@ -9,8 +9,8 @@ import {
 import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 import { Inhumacion } from './entities/inhumacion.entity';
-import { Espacio } from '../infraestructura/entities/espacio.entity';
 import { EstadoEspacio } from '../infraestructura/entities/espacio.entity';
+import { EspaciosService } from '../infraestructura/espacios.service';
 import { CreateInhumacionDto } from './dto/create-inhumacion.dto';
 import { UpdateInhumacionDto } from './dto/update-inhumacion.dto';
 import { PagosService } from '../caja/pagos.service';
@@ -22,8 +22,7 @@ export class InhumacionesService {
     constructor(
         @InjectRepository(Inhumacion)
         private inhumacionesRepository: Repository<Inhumacion>,
-        @InjectRepository(Espacio)
-        private espaciosRepository: Repository<Espacio>,
+        private espaciosService: EspaciosService,
         @Inject(forwardRef(() => PagosService))
         private pagosService: PagosService,
         @Inject(forwardRef(() => ConceptosPagoService))
@@ -31,16 +30,8 @@ export class InhumacionesService {
     ) { }
 
     async create(createInhumacionDto: CreateInhumacionDto): Promise<Inhumacion> {
-        // Verificar que el espacio esté disponible
-        const espacio = await this.espaciosRepository.findOne({
-            where: { id: createInhumacionDto.espacioId },
-        });
-
-        if (!espacio) {
-            throw new NotFoundException(
-                `Espacio con ID ${createInhumacionDto.espacioId} no encontrado`,
-            );
-        }
+        // Verificar que el espacio esté disponible (usando EspaciosService)
+        const espacio = await this.espaciosService.findOne(createInhumacionDto.espacioId);
 
         if (espacio.estado !== EstadoEspacio.LIBRE) {
             throw new BadRequestException(
@@ -66,9 +57,8 @@ export class InhumacionesService {
         const inhumacion = this.inhumacionesRepository.create(inhumacionData);
         const saved = await this.inhumacionesRepository.save(inhumacion);
 
-        // Actualizar el estado del espacio a OCUPADO
-        espacio.estado = EstadoEspacio.OCUPADO;
-        await this.espaciosRepository.save(espacio);
+        // Actualizar el estado del espacio a OCUPADO (centralizado en EspaciosService)
+        await this.espaciosService.marcarOcupado(createInhumacionDto.espacioId);
 
         // Si se proporcionó un concepto de pago, crear el pago automáticamente
         if (conceptoPagoId && usuarioId) {
@@ -135,7 +125,7 @@ export class InhumacionesService {
                     apellidos: true
                 }
             },
-            order: { fechaInhumacion: 'DESC' },
+            order: { id: 'DESC' },
         });
     }
 
@@ -182,15 +172,8 @@ export class InhumacionesService {
     async remove(id: number): Promise<void> {
         const inhumacion = await this.findOne(id);
 
-        // Liberar el espacio
-        const espacio = await this.espaciosRepository.findOne({
-            where: { id: inhumacion.espacioId },
-        });
-
-        if (espacio) {
-            espacio.estado = EstadoEspacio.LIBRE;
-            await this.espaciosRepository.save(espacio);
-        }
+        // Liberar el espacio (centralizado en EspaciosService)
+        await this.espaciosService.marcarLibre(inhumacion.espacioId);
 
         await this.inhumacionesRepository.remove(inhumacion);
     }

@@ -135,10 +135,10 @@
                 </ng-template>
                 <ng-template pTemplate="body" let-pago>
                     <tr>
-                        <td>{{ pago.numeroRecibo }}</td>
-                        <td>{{ pago.titular?.nombres || '-' }}</td>
-                        <td>{{ pago.conceptoPago?.descripcion || '-' }}</td>
-                        <td>S/ {{ pago.monto | number:'1.2-2' }}</td>
+                        <td>{{ pago.codigoRecibo || '-' }}</td>
+                        <td>{{ pago.titular?.nombres || '-' }} {{ pago.titular?.apellidos || '' }}</td>
+                        <td>{{ pago.detalles && pago.detalles.length > 0 ? pago.detalles[0].concepto?.nombre : '-' }}</td>
+                        <td>S/ {{ pago.montoTotal | number:'1.2-2' }}</td>
                         <td>{{ pago.fechaPago | date:'short' }}</td>
                     </tr>
                 </ng-template>

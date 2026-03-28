@@ -4,6 +4,7 @@ import { Router } from '@angular/router';
 import { EspaciosService } from '../../../core/services/espacios.service';
 import { SectoresService } from '../../../core/services/sectores.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ExportService } from '../../../core/services/export.service';
 import { MessageService, ConfirmationService } from 'primeng/api';
 import { Observable, tap, catchError, of } from 'rxjs';
 
@@ -51,6 +52,7 @@ export class EspaciosListComponent implements OnInit {
     private espaciosService = inject(EspaciosService);
     private sectoresService = inject(SectoresService);
     public authService = inject(AuthService);
+    private exportService = inject(ExportService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
     private cdr = inject(ChangeDetectorRef);
@@ -79,6 +81,33 @@ export class EspaciosListComponent implements OnInit {
     ngOnInit(): void {
         this.loadEspacios();
         this.loadSectores();
+    }
+
+    exportPdf() {
+        const exportData = this.espacios.map(e => ({
+            ...e,
+            sectorNombre: e.sector?.nombre || '-',
+            ubicacion: `Fila ${e.fila || '-'}, Col ${e.columna || '-'}`
+        }));
+        const cols = [
+            { header: 'Código', dataKey: 'codigo' },
+            { header: 'Sector', dataKey: 'sectorNombre' },
+            { header: 'Tipo', dataKey: 'tipo' },
+            { header: 'Ubicación', dataKey: 'ubicacion' },
+            { header: 'Estado', dataKey: 'estado' }
+        ];
+        this.exportService.exportPdf(cols, exportData, 'Espacios', 'Reporte de Espacios');
+    }
+
+    exportExcel() {
+        const exportData = this.espacios.map(e => ({
+            'Código': e.codigo,
+            'Sector': e.sector?.nombre || '-',
+            'Tipo': e.tipo,
+            'Ubicación': `Fila ${e.fila || '-'}, Col ${e.columna || '-'}`,
+            'Estado': e.estado
+        }));
+        this.exportService.exportExcel(exportData, 'Espacios');
     }
 
     loadEspacios(): void {

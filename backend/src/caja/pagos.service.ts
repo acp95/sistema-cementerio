@@ -86,7 +86,7 @@ export class PagosService {
                     }
                 }
             },
-            order: { fechaPago: 'DESC' },
+            order: { id: 'DESC' },
         });
     }
 
@@ -107,7 +107,7 @@ export class PagosService {
         return await this.pagosRepository.find({
             where: { titularId },
             relations: ['detalles', 'detalles.concepto'],
-            order: { fechaPago: 'DESC' },
+            order: { id: 'DESC' },
         });
     }
 
@@ -128,7 +128,7 @@ export class PagosService {
         return await this.pagosRepository.find({
             where: { inhumacionId },
             relations: ['detalles', 'detalles.concepto'],
-            order: { fechaPago: 'DESC' },
+            order: { id: 'DESC' },
         });
     }
 

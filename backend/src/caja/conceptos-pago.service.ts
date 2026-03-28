@@ -25,10 +25,13 @@ export class ConceptosPagoService {
 
     async findAll(includeInactive: boolean = false): Promise<ConceptoPago[]> {
         if (includeInactive) {
-            return await this.conceptosRepository.find();
+            return await this.conceptosRepository.find({
+                order: { id: 'DESC' },
+            });
         }
         return await this.conceptosRepository.find({
             where: { activo: true },
+            order: { id: 'DESC' },
         });
     }
 

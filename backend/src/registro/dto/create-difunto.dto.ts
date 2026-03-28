@@ -5,8 +5,10 @@ import {
     IsDateString,
     MaxLength,
     IsIn,
-    IsObject,
+    ValidateNested,
 } from 'class-validator';
+import { Type } from 'class-transformer';
+import { InhumacionDataDto } from './inhumacion-data.dto';
 
 export class CreateDifuntoDto {
     @ApiProperty({
@@ -91,27 +93,24 @@ export class CreateDifuntoDto {
         example: 'Familiar notificado',
         required: false,
     })
-    @IsString()
     @IsOptional()
     observaciones?: string;
 
     @ApiProperty({
-        description: 'Datos de inhumación (espacio, titular, fechas)',
+        description: 'ID del titular responsable',
+        example: 1,
         required: false,
     })
     @IsOptional()
-    @IsObject()
-    inhumacionData?: {
-        espacioId: number;
-        titularId?: number;
-        fechaInhumacion: string;
-        horaInhumacion?: string;
-        tipoConcesion?: string;
-        fechaVencimiento?: string;
-        estado?: string;
-        numeroActa?: string;
-        observaciones?: string;
-        conceptoPagoId?: number;
-        usuarioId?: number;
-    };
+    titularId?: number;
+
+    @ApiProperty({
+        description: 'Datos de inhumación (espacio, titular, fechas). difuntoId se asigna automáticamente.',
+        required: false,
+        type: () => InhumacionDataDto,
+    })
+    @IsOptional()
+    @ValidateNested()
+    @Type(() => InhumacionDataDto)
+    inhumacionData?: InhumacionDataDto;
 }

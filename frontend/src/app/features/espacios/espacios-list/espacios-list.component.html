@@ -14,7 +14,9 @@
         </ng-template>
 
         <ng-template #end>
-            <p-button label="Exportar" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
+            <p-button label="Excel" icon="pi pi-file-excel" severity="success" class="mr-2" (onClick)="exportExcel()" />
+            <p-button label="PDF" icon="pi pi-file-pdf" severity="danger" class="mr-2" (onClick)="exportPdf()" />
+            <p-button label="CSV" icon="pi pi-upload" severity="secondary" (onClick)="dt.exportCSV()" />
         </ng-template>
     </p-toolbar>
 

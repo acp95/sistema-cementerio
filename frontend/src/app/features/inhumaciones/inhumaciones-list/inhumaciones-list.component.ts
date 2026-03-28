@@ -20,9 +20,11 @@ import { InputIconModule } from 'primeng/inputicon';
 import { FormsModule } from '@angular/forms';
 import { DifuntosService } from '../../../core/services/difuntos.service';
 import { EspaciosService } from '../../../core/services/espacios.service';
+import { SectoresService } from '../../../core/services/sectores.service';
 import { TitularesService } from '../../../core/services/titulares.service';
 import { ConceptosPagoService } from '../../../core/services/conceptos-pago.service';
 import { AuthService } from '../../../core/services/auth.service';
+import { ExportService } from '../../../core/services/export.service';
 
 @Component({
     selector: 'app-inhumaciones-list',
@@ -52,16 +54,20 @@ export class InhumacionesListComponent implements OnInit {
     private inhumacionesService = inject(InhumacionesService);
     private difuntosService = inject(DifuntosService);
     private espaciosService = inject(EspaciosService);
+    private sectoresService = inject(SectoresService);
     private titularesService = inject(TitularesService);
     private conceptosPagoService = inject(ConceptosPagoService);
     public authService = inject(AuthService);
+    private exportService = inject(ExportService);
     private messageService = inject(MessageService);
     private confirmationService = inject(ConfirmationService);
     private cdr = inject(ChangeDetectorRef);
 
     inhumaciones: any[] = [];
     difuntos: any[] = [];
+    allEspacios: any[] = [];
     espacios: any[] = [];
+    sectores: any[] = [];
     titulares: any[] = [];
     conceptosPago: any[] = [];
 
@@ -87,9 +93,46 @@ export class InhumacionesListComponent implements OnInit {
     ngOnInit(): void {
         this.loadInhumaciones();
         this.loadDifuntos();
+        this.loadSectores();
         this.loadEspacios();
         this.loadTitulares();
         this.loadConceptosPago();
+    }
+
+    exportPdf() {
+        const exportData = this.inhumaciones.map(i => ({
+            ...i,
+            numeroInhumacion: `N° ${String(i.id).padStart(5, '0')}`,
+            difuntoExport: i.difunto ? `${i.difunto.nombres} ${i.difunto.apellidos}` : '-',
+            espacioExport: i.espacio ? i.espacio.codigo : '-',
+            fechaExport: i.fechaInhumacion ? new Date(i.fechaInhumacion).toLocaleDateString() : '-',
+            titularExport: i.titular ? `${i.titular.nombres} ${i.titular.apellidos}` : '-'
+        }));
+        const cols = [
+            { header: 'N° Inhumación', dataKey: 'numeroInhumacion' },
+            { header: 'Difunto', dataKey: 'difuntoExport' },
+            { header: 'Espacio', dataKey: 'espacioExport' },
+            { header: 'Fecha', dataKey: 'fechaExport' },
+            { header: 'Acta', dataKey: 'numeroActa' },
+            { header: 'Tipo Concesión', dataKey: 'tipoConcesion' },
+            { header: 'Titular', dataKey: 'titularExport' },
+            { header: 'Estado', dataKey: 'estado' }
+        ];
+        this.exportService.exportPdf(cols, exportData, 'Inhumaciones', 'Reporte de Inhumaciones');
+    }
+
+    exportExcel() {
+        const exportData = this.inhumaciones.map(i => ({
+            'N° Inhumación': `N° ${String(i.id).padStart(5, '0')}`,
+            'Difunto': i.difunto ? `${i.difunto.nombres} ${i.difunto.apellidos}` : '-',
+            'Espacio': i.espacio ? i.espacio.codigo : '-',
+            'Fecha': i.fechaInhumacion ? new Date(i.fechaInhumacion).toLocaleDateString() : '-',
+            'Acata de Defunción': i.numeroActa || '-',
+            'Tipo Concesión': i.tipoConcesion || '-',
+            'Titular': i.titular ? `${i.titular.nombres} ${i.titular.apellidos}` : '-',
+            'Estado': i.estado || '-'
+        }));
+        this.exportService.exportExcel(exportData, 'Inhumaciones');
     }
 
     loadInhumaciones(): void {
@@ -115,13 +158,25 @@ export class InhumacionesListComponent implements OnInit {
         });
     }
 
+    loadSectores(): void {
+        this.sectoresService.getAll().subscribe({
+            next: (data) => {
+                this.sectores = data.map((s: any) => ({ label: s.nombre, value: s.id }));
+            },
+            error: (error) => console.error('Error loading sectores:', error)
+        });
+    }
+
     loadEspacios(): void {
         this.espaciosService.getAll().subscribe({
             next: (data) => {
-                this.espacios = data.map((e: any) => ({
+                this.allEspacios = data.map((e: any) => ({
                     label: `${e.codigo || 'S/C'} - ${e.tipoEspacio || 'No definido'}`,
-                    value: e.id
+                    value: e.id,
+                    sectorId: e.sector?.id,
+                    estado: e.estado
                 }));
+                this.updateEspaciosList();
             },
             error: (error) => console.error('Error loading espacios:', error)
         });
@@ -151,10 +206,39 @@ export class InhumacionesListComponent implements OnInit {
         });
     }
 
+    updateEspaciosList(sectorId?: number | null): void {
+        let list = this.allEspacios;
+        if (sectorId) {
+            list = list.filter(e => e.sectorId === sectorId);
+        }
+        
+        // Filter by state LIBRE, OR it's the currently selected espacio
+        this.espacios = list.filter(e => e.estado === 'LIBRE' || e.value === this.inhumacion.espacioId);
+    }
+
     openNew(): void {
         this.inhumacion = {};
         this.submitted = false;
+        this.updateEspaciosList(this.inhumacion.sectorId);
         this.inhumacionDialog = true;
+    }
+
+    onSectorChange(sectorId: number | null): void {
+        this.inhumacion.espacioId = null; // Reiniciar espacio seleccionado
+        this.updateEspaciosList(sectorId);
+    }
+
+    onEspacioChange(espacioId: number): void {
+        const espacioFound = this.allEspacios.find(e => e.value === espacioId);
+        if (espacioFound && espacioFound.sectorId) {
+            this.inhumacion.sectorId = espacioFound.sectorId;
+        }
+    }
+
+    onTipoConcesionChange(tipo: string): void {
+        if (tipo === 'PERPETUA') {
+            this.inhumacion.fechaVencimiento = null;
+        }
     }
 
     onDifuntoChange(difuntoId: number): void {
@@ -170,6 +254,18 @@ export class InhumacionesListComponent implements OnInit {
             next: (difunto: any) => {
                 console.log('✅ Difunto data recibida:', difunto);
 
+                // Auto-completar Titular desde los datos del difunto (novedad)
+                if (difunto.titular && difunto.titular.id) {
+                    this.inhumacion.titularId = difunto.titular.id;
+                    console.log('👤 Titular ID asignado desde el difunto:', difunto.titular.id);
+                }
+
+                // Auto-completar Número de Acta desde los datos del difunto
+                if (difunto.actaDefuncion) {
+                    this.inhumacion.numeroActa = difunto.actaDefuncion;
+                    console.log('📄 Número de Acta asignado desde el difunto:', difunto.actaDefuncion);
+                }
+
                 // Si el difunto tiene una inhumación previa, pre-llenar espacio y titular
                 if (difunto.inhumacion) {
                     console.log('📋 Inhumación encontrada:', difunto.inhumacion);
@@ -178,15 +274,26 @@ export class InhumacionesListComponent implements OnInit {
                     if (difunto.inhumacion.espacioId) {
                         this.inhumacion.espacioId = difunto.inhumacion.espacioId;
                         console.log('🏢 Espacio ID asignado:', difunto.inhumacion.espacioId);
+                        
+                        // Auto-completar Sector
+                        const espacioFound = this.allEspacios.find(e => e.value === difunto.inhumacion.espacioId);
+                        if (espacioFound && espacioFound.sectorId) {
+                            this.inhumacion.sectorId = espacioFound.sectorId;
+                            this.updateEspaciosList(espacioFound.sectorId);
+                            console.log('📍 Sector ID asignado:', this.inhumacion.sectorId);
+                        } else {
+                            this.updateEspaciosList(this.inhumacion.sectorId);
+                        }
                     } else {
                         console.log('⚠️ No hay espacioId en la inhumación');
                     }
 
-                    if (difunto.inhumacion.titularId) {
+                    // Si todavía no hay titular, usamos el de la inhumación previa
+                    if (!this.inhumacion.titularId && difunto.inhumacion.titularId) {
                         this.inhumacion.titularId = difunto.inhumacion.titularId;
-                        console.log('👤 Titular ID asignado:', difunto.inhumacion.titularId);
-                    } else {
-                        console.log('⚠️ No hay titularId en la inhumación');
+                        console.log('👤 Titular ID asignado desde la inhumación previa:', difunto.inhumacion.titularId);
+                    } else if (!difunto.titular && !difunto.inhumacion.titularId) {
+                        console.log('⚠️ No hay titularId en el difunto ni en la inhumación');
                     }
 
                     this.messageService.add({
@@ -220,6 +327,20 @@ export class InhumacionesListComponent implements OnInit {
 
         if (this.inhumacion.fechaInhumacion) this.inhumacion.fechaInhumacion = new Date(this.inhumacion.fechaInhumacion);
         if (this.inhumacion.fechaVencimiento) this.inhumacion.fechaVencimiento = new Date(this.inhumacion.fechaVencimiento);
+        
+        // Find which sector has this espacio to set the sector dropdown
+        if (this.inhumacion.espacioId) {
+            const espacioFound = this.allEspacios.find(e => e.value === this.inhumacion.espacioId);
+            if (espacioFound && espacioFound.sectorId) {
+                this.inhumacion.sectorId = espacioFound.sectorId;
+                this.updateEspaciosList(espacioFound.sectorId);
+            } else {
+                this.updateEspaciosList();
+            }
+        } else {
+            this.updateEspaciosList();
+        }
+
         this.inhumacionDialog = true;
     }
 
@@ -252,7 +373,8 @@ export class InhumacionesListComponent implements OnInit {
     saveInhumacion(): void {
         this.submitted = true;
 
-        if (this.inhumacion.difuntoId && this.inhumacion.espacioId && this.inhumacion.fechaInhumacion) {
+        if (this.inhumacion.difuntoId && this.inhumacion.espacioId && this.inhumacion.fechaInhumacion
+            && (this.inhumacion.id || this.inhumacion.conceptoPagoId)) {
             // Format hora from separate time picker
             if (this.inhumacion.horaInhumacionDate instanceof Date) {
                 const hours = this.inhumacion.horaInhumacionDate.getHours();
@@ -370,17 +492,11 @@ export class InhumacionesListComponent implements OnInit {
         const espacioTipo = inhumacion.espacio?.tipoEspacio || '-';
         const espacioUbicacion = inhumacion.espacio?.ubicacion || '-';
 
-        // Pagos logic
-        let pagosHtml = '<tr><td colspan="4" style="text-align:center; padding: 10px;">No hay pagos registrados</td></tr>';
+        // Pagos logic summary
+        let estadoPagoGlobal = 'POR PAGAR';
         if (inhumacion.pagos && inhumacion.pagos.length > 0) {
-            pagosHtml = inhumacion.pagos.map((p: any) => `
-                <tr>
-                    <td>${p.codigoRecibo || 'S/N'}</td>
-                    <td>${new Date(p.fechaPago).toLocaleDateString('es-PE')}</td>
-                    <td>${p.estado}</td>
-                    <td style="text-align: right">S/. ${Number(p.montoTotal || 0).toFixed(2)}</td>
-                </tr>
-            `).join('');
+            const hasPagado = inhumacion.pagos.some((p: any) => p.estado === 'PAGADO');
+            estadoPagoGlobal = hasPagado ? 'PAGADO' : 'POR PAGAR';
         }
 
         const contenido = `
@@ -600,6 +716,10 @@ export class InhumacionesListComponent implements OnInit {
                         <div class="section-header">II. DATOS DE LA INHUMACIÓN</div>
                         <table>
                              <tr>
+                                <td class="data-label">N° DE INHUMACIÓN:</td>
+                                <td class="data-value font-bold">N° ${String(inhumacion.id).padStart(5, '0')}</td>
+                            </tr>
+                             <tr>
                                 <td class="data-label">FECHA DE INHUMACIÓN:</td>
                                 <td class="data-value">${fechaInhumacion}</td>
                             </tr>
@@ -610,6 +730,10 @@ export class InhumacionesListComponent implements OnInit {
                              <tr>
                                 <td class="data-label">TIPO DE CONCESIÓN:</td>
                                 <td class="data-value">${inhumacion.tipoConcesion}</td>
+                            </tr>
+                             <tr>
+                                <td class="data-label">ESTADO DE PAGO:</td>
+                                <td class="data-value font-bold">${estadoPagoGlobal}</td>
                             </tr>
                         </table>
 
@@ -641,20 +765,7 @@ export class InhumacionesListComponent implements OnInit {
                             </tr>
                         </table>
 
-                        <div class="section-header">V. HISTORIAL DE PAGOS</div>
-                        <table class="grid-table">
-                            <thead>
-                                <tr>
-                                    <th>N° RECIBO</th>
-                                    <th>FECHA</th>
-                                    <th>ESTADO</th>
-                                    <th>MONTO</th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                ${pagosHtml}
-                            </tbody>
-                        </table>
+
                         
                         <div class="date-place">
                             Chen Chen, ${fechaDoc}

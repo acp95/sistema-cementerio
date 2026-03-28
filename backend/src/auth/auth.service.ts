@@ -8,8 +8,7 @@ import { Repository } from 'typeorm';
 import { JwtService } from '@nestjs/jwt';
 import * as bcrypt from 'bcrypt';
 import { Usuario } from './entities/usuario.entity';
-import { RolPermiso } from './entities/rol-permiso.entity';
-import { Permiso } from './entities/permiso.entity';
+import { RolesService } from './roles.service';
 import { LoginDto, AuthResponseDto } from './dto';
 
 @Injectable()
@@ -17,35 +16,16 @@ export class AuthService {
     constructor(
         @InjectRepository(Usuario)
         private readonly usuarioRepository: Repository<Usuario>,
-        @InjectRepository(RolPermiso)
-        private readonly rolPermisoRepository: Repository<RolPermiso>,
-        @InjectRepository(Permiso)
-        private readonly permisoRepository: Repository<Permiso>,
+        private readonly rolesService: RolesService,
         private readonly jwtService: JwtService,
     ) { }
 
     /**
-     * Obtiene los permisos de un rol
+     * Obtiene los permisos (slugs) de un rol reutilizando RolesService
      */
-    async getPermissionsByRolId(rolId: number): Promise<string[]> {
-        const rolPermisos = await this.rolPermisoRepository.find({
-            where: { rolId },
-        });
-
-        if (rolPermisos.length === 0) {
-            return [];
-        }
-
-        // Fetch each permiso individually
-        const permisosResult: string[] = [];
-        for (const rp of rolPermisos) {
-            const permiso = await this.permisoRepository.findOneBy({ id: rp.permisoId });
-            if (permiso) {
-                permisosResult.push(permiso.slug);
-            }
-        }
-
-        return permisosResult;
+    private async getPermissionSlugs(rolId: number): Promise<string[]> {
+        const permisos = await this.rolesService.getPermisosByRol(rolId);
+        return permisos.map(p => p.slug);
     }
 
     /**
@@ -98,8 +78,8 @@ export class AuthService {
             loginDto.password,
         );
 
-        // Obtener permisos del rol
-        const permisos = await this.getPermissionsByRolId(usuario.rolId);
+        // Obtener permisos del rol (reutilizando RolesService)
+        const permisos = await this.getPermissionSlugs(usuario.rolId);
 
         // Crear payload del JWT
         const payload = {
@@ -147,7 +127,7 @@ export class AuthService {
             throw new NotFoundException('Usuario no encontrado');
         }
 
-        const permisos = await this.getPermissionsByRolId(usuario.rolId);
+        const permisos = await this.getPermissionSlugs(usuario.rolId);
 
         const { passwordHash, ...result } = usuario;
         return {

@@ -14,6 +14,7 @@ export class UsuariosService {
     async findAll(): Promise<Usuario[]> {
         return await this.usuarioRepository.find({
             relations: ['rol'],
+            order: { id: 'DESC' },
         });
     }
 

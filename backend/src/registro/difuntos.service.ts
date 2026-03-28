@@ -1,25 +1,16 @@
-import { Injectable, NotFoundException, Inject, ConflictException, forwardRef } from '@nestjs/common';
+import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
 import { InjectRepository } from '@nestjs/typeorm';
-import { Repository, Like, DataSource } from 'typeorm';
+import { Repository, Like } from 'typeorm';
 import { Difunto } from './entities/difunto.entity';
-import { Inhumacion } from './entities/inhumacion.entity';
-import { Espacio, EstadoEspacio } from '../infraestructura/entities/espacio.entity';
 import { CreateDifuntoDto } from './dto/create-difunto.dto';
-import { PagosService } from '../caja/pagos.service';
-import { ConceptosPagoService } from '../caja/conceptos-pago.service';
-import { MetodoPago } from '../caja/entities/pago.entity';
+import { InhumacionesService } from './inhumaciones.service';
 
 @Injectable()
 export class DifuntosService {
     constructor(
         @InjectRepository(Difunto)
         private difuntosRepository: Repository<Difunto>,
-        @Inject(DataSource)
-        private dataSource: DataSource,
-        @Inject(forwardRef(() => PagosService))
-        private pagosService: PagosService,
-        @Inject(forwardRef(() => ConceptosPagoService))
-        private conceptosPagoService: ConceptosPagoService,
+        private inhumacionesService: InhumacionesService,
     ) { }
 
     async create(createDifuntoDto: CreateDifuntoDto): Promise<Difunto> {
@@ -35,55 +26,37 @@ export class DifuntosService {
             }
         }
 
-        // Usar transacción para garantizar atomicidad
-        const result = await this.dataSource.transaction(async (manager) => {
-            // 1. Crear difunto
-            const { inhumacionData, ...difuntoData } = createDifuntoDto;
-            const difunto = manager.create(Difunto, difuntoData);
-            const savedDifunto = await manager.save(difunto);
-
-            let savedInhumacion: Inhumacion | null = null;
-
-            // 2. Crear inhumación asociada si se proporcionaron datos
-            if (inhumacionData && inhumacionData.espacioId) {
-                const { conceptoPagoId, usuarioId, ...inhumacionFields } = inhumacionData as any;
-                const inhumacion = manager.create(Inhumacion, {
-                    difuntoId: savedDifunto.id,
-                    ...inhumacionFields,
-                });
-                savedInhumacion = await manager.save(inhumacion);
-
-                // 3. Actualizar estado del espacio a OCUPADO
-                await manager.update(Espacio, inhumacionData.espacioId, {
-                    estado: EstadoEspacio.OCUPADO,
-                });
+        // Validar acta de defuncion
+        if (createDifuntoDto.actaDefuncion) {
+            const existingActa = await this.difuntosRepository.findOne({
+                where: { actaDefuncion: createDifuntoDto.actaDefuncion },
+            });
+            if (existingActa) {
+                throw new ConflictException(
+                    `Ya existe un difunto registrado con el Acta de Defunción ${createDifuntoDto.actaDefuncion}`
+                );
             }
+        }
 
-            return { savedDifunto, savedInhumacion, inhumacionData };
+        // 1. Crear difunto
+        const { inhumacionData, titularId, ...difuntoData } = createDifuntoDto;
+        const difunto = this.difuntosRepository.create({
+            ...difuntoData,
+            titular: titularId ? { id: titularId } as any : null
         });
+        const savedDifunto = await this.difuntosRepository.save(difunto);
 
-        // 4. Crear pago automático fuera de la transacción si se especificó concepto
-        const { savedDifunto, savedInhumacion, inhumacionData } = result;
-        if (savedInhumacion && inhumacionData?.conceptoPagoId && inhumacionData?.usuarioId) {
+        // 2. Delegar la creación de inhumación (con validaciones, estado de espacio y pago automático)
+        if (inhumacionData && inhumacionData.espacioId) {
             try {
-                const concepto = await this.conceptosPagoService.findOne(inhumacionData.conceptoPagoId);
-
-                await this.pagosService.create({
-                    titularId: savedInhumacion.titularId,
-                    usuarioId: inhumacionData.usuarioId,
-                    inhumacionId: savedInhumacion.id,
-                    montoTotal: Number(concepto.precioBase),
-                    metodoPago: MetodoPago.EFECTIVO,
-                    estado: 'PENDIENTE',
-                    observaciones: `Pago pendiente por servicio de inhumación - ${concepto.nombre}`,
-                    detalles: [{
-                        conceptoId: inhumacionData.conceptoPagoId,
-                        cantidad: 1,
-                        subtotal: Number(concepto.precioBase),
-                    }],
-                });
+                await this.inhumacionesService.create({
+                    ...inhumacionData,
+                    difuntoId: savedDifunto.id,
+                } as any);
             } catch (error) {
-                console.error('Error al crear pago automático:', error);
+                // Si falla la inhumación, eliminar el difunto creado para mantener consistencia
+                await this.difuntosRepository.remove(savedDifunto);
+                throw error;
             }
         }
 
@@ -92,7 +65,7 @@ export class DifuntosService {
 
     async findAll(): Promise<Difunto[]> {
         return await this.difuntosRepository.find({
-            relations: ['inhumacion', 'inhumacion.espacio'],
+            relations: ['inhumacion', 'inhumacion.espacio', 'titular'],
             select: {
                 id: true,
                 nombres: true,
@@ -100,6 +73,13 @@ export class DifuntosService {
                 dni: true,
                 fechaDefuncion: true,
                 fechaNacimiento: true,
+                actaDefuncion: true,
+                titular: {
+                    id: true,
+                    nombres: true,
+                    apellidos: true,
+                    dni: true
+                },
                 inhumacion: {
                     id: true,
                     espacio: {
@@ -108,14 +88,14 @@ export class DifuntosService {
                     }
                 }
             },
-            order: { fechaDefuncion: 'DESC' },
+            order: { id: 'DESC' },
         });
     }
 
     async findOne(id: number): Promise<Difunto> {
         const difunto = await this.difuntosRepository.findOne({
             where: { id },
-            relations: ['inhumacion', 'inhumacion.espacio', 'inhumacion.titular'],
+            relations: ['inhumacion', 'inhumacion.espacio', 'inhumacion.titular', 'titular'],
         });
 
         if (!difunto) {
@@ -145,7 +125,34 @@ export class DifuntosService {
 
     async update(id: number, updateDifuntoDto: Partial<CreateDifuntoDto>): Promise<Difunto> {
         const difunto = await this.findOne(id);
-        Object.assign(difunto, updateDifuntoDto);
+        
+        // Validación de DNI único al actualizar
+        if (updateDifuntoDto.dni && updateDifuntoDto.dni !== difunto.dni) {
+            const existente = await this.difuntosRepository.findOne({
+                where: { dni: updateDifuntoDto.dni }
+            });
+            if (existente) {
+                throw new ConflictException(`Ya existe otro difunto con el DNI ${updateDifuntoDto.dni}`);
+            }
+        }
+
+        // Validación de Acta de Defunción única al actualizar
+        if (updateDifuntoDto.actaDefuncion && updateDifuntoDto.actaDefuncion !== difunto.actaDefuncion) {
+            const existente = await this.difuntosRepository.findOne({
+                where: { actaDefuncion: updateDifuntoDto.actaDefuncion }
+            });
+            if (existente) {
+                throw new ConflictException(`Ya existe otro difunto con el Acta de Defunción ${updateDifuntoDto.actaDefuncion}`);
+            }
+        }
+
+        const { titularId, ...rest } = updateDifuntoDto;
+        
+        Object.assign(difunto, rest);
+        if (titularId !== undefined) {
+            difunto.titular = titularId ? { id: titularId } as any : null;
+        }
+
         return await this.difuntosRepository.save(difunto);
     }
 
