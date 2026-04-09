@@ -43,6 +43,7 @@
                 <th pSortableColumn="numeroActa">
                     Acta <p-sortIcon field="numeroActa" />
                 </th>
+                <th style="min-width: 8rem">Pago</th>
                 <th style="min-width: 12rem"></th>
             </tr>
         </ng-template>
@@ -52,14 +53,25 @@
                 <td>{{ inh.difunto?.nombres || '-' }} {{ inh.difunto?.apellidos || '' }}</td>
                 <td>{{ inh.espacio?.codigo || '-' }}</td>
                 <td>{{ inh.fechaInhumacion | date:'dd/MM/yyyy' }}</td>
-                <td>{{ inh.numeroActa || '-' }}</td>
+                <td>
+                    <p-tag *ngIf="inh.pagos && inh.pagos.length > 0 && inh.pagos[0].estado === 'PAGADO'" 
+                        value="Pagado" severity="success" />
+                    <p-tag *ngIf="inh.pagos && inh.pagos.length > 0 && inh.pagos[0].estado === 'PENDIENTE'" 
+                        value="Pendiente" severity="warn" />
+                    <p-tag *ngIf="!inh.pagos || inh.pagos.length === 0" 
+                        value="Por Pagar" severity="secondary" />
+                </td>
                 <td>
                     <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="editInhumacion(inh)" *ngIf="authService.hasPermission('actualizar_inhumaciones')" />
+                        (click)="editInhumacion(inh)" *ngIf="inh.estado !== 'ANULADO' && authService.hasPermission('actualizar_inhumaciones')" />
                     <p-button icon="pi pi-print" severity="secondary" class="mr-2" [rounded]="true" [outlined]="true"
                         (click)="imprimirConstancia(inh)" pTooltip="Imprimir Constancia" />
+                    <p-button icon="pi pi-ban" severity="warn" class="mr-2" [rounded]="true" [outlined]="true"
+                        (click)="anularInhumacion(inh)" pTooltip="Anular"
+                        *ngIf="inh.estado !== 'ANULADO' && authService.hasPermission('anular_inhumaciones')" />
                     <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                        (click)="deleteInhumacion(inh)" *ngIf="authService.hasPermission('eliminar_inhumaciones')" />
+                        (click)="deleteInhumacion(inh)" pTooltip="Eliminar permanentemente"
+                        *ngIf="authService.hasPermission('eliminar_inhumaciones')" />
                 </td>
             </tr>
         </ng-template>

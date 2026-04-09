@@ -74,6 +74,9 @@ export class DifuntosService {
                 fechaDefuncion: true,
                 fechaNacimiento: true,
                 actaDefuncion: true,
+                sexo: true,
+                causaMuerte: true,
+                observaciones: true,
                 titular: {
                     id: true,
                     nombres: true,

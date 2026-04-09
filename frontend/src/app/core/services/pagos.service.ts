@@ -59,6 +59,12 @@ export class PagosService {
         );
     }
 
+    revertirAnulacion(id: number): Observable<Pago> {
+        return this.http.patch<Pago>(`${this.apiUrl}/${id}/revertir-anulacion`, {}).pipe(
+            catchError(this.handleError)
+        );
+    }
+
     private handleError(error: any): Observable<never> {
         console.error('Error en PagosService:', error);
         return throwError(() => error);

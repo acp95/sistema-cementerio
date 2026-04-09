@@ -13,6 +13,8 @@
                         <th class="text-center" style="width: 100px">Crear</th>
                         <th class="text-center" style="width: 100px">Actualizar</th>
                         <th class="text-center" style="width: 100px">Eliminar</th>
+                        <th class="text-center" style="width: 100px">Anular</th>
+                        <th class="text-center" style="width: 100px">Revertir</th>
                     </tr>
                 </ng-template>
                 <ng-template #body let-row let-i="rowIndex">
@@ -20,16 +22,22 @@
                         <td>{{ i + 1 }}</td>
                         <td>{{ row.modulo.nombre }}</td>
                         <td class="text-center">
-                            <p-toggleSwitch [(ngModel)]="row.ver" />
+                            <p-toggleSwitch *ngIf="hasPermisoInSystem(row.modulo.slug, 'ver')" [(ngModel)]="row.ver" />
                         </td>
                         <td class="text-center">
-                            <p-toggleSwitch [(ngModel)]="row.crear" />
+                            <p-toggleSwitch *ngIf="hasPermisoInSystem(row.modulo.slug, 'crear')" [(ngModel)]="row.crear" />
                         </td>
                         <td class="text-center">
-                            <p-toggleSwitch [(ngModel)]="row.actualizar" />
+                            <p-toggleSwitch *ngIf="hasPermisoInSystem(row.modulo.slug, 'actualizar')" [(ngModel)]="row.actualizar" />
                         </td>
                         <td class="text-center">
-                            <p-toggleSwitch [(ngModel)]="row.eliminar" />
+                            <p-toggleSwitch *ngIf="hasPermisoInSystem(row.modulo.slug, 'eliminar')" [(ngModel)]="row.eliminar" />
+                        </td>
+                        <td class="text-center">
+                            <p-toggleSwitch *ngIf="hasPermisoInSystem(row.modulo.slug, 'anular')" [(ngModel)]="row.anular" />
+                        </td>
+                        <td class="text-center">
+                            <p-toggleSwitch *ngIf="hasPermisoInSystem(row.modulo.slug, 'revertir_anulacion')" [(ngModel)]="row.revertir" />
                         </td>
                     </tr>
                 </ng-template>

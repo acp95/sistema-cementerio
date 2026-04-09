@@ -65,6 +65,7 @@ export class InhumacionesListComponent implements OnInit {
 
     inhumaciones: any[] = [];
     difuntos: any[] = [];
+    allDifuntos_raw: any[] = [];
     allEspacios: any[] = [];
     espacios: any[] = [];
     sectores: any[] = [];
@@ -106,7 +107,8 @@ export class InhumacionesListComponent implements OnInit {
             difuntoExport: i.difunto ? `${i.difunto.nombres} ${i.difunto.apellidos}` : '-',
             espacioExport: i.espacio ? i.espacio.codigo : '-',
             fechaExport: i.fechaInhumacion ? new Date(i.fechaInhumacion).toLocaleDateString() : '-',
-            titularExport: i.titular ? `${i.titular.nombres} ${i.titular.apellidos}` : '-'
+            titularExport: i.titular ? `${i.titular.nombres} ${i.titular.apellidos}` : '-',
+            pagoExport: i.pagos && i.pagos.length > 0 ? (i.pagos.some((p: any) => p.estado === 'PAGADO') ? 'PAGADO' : 'PENDIENTE') : 'POR PAGAR'
         }));
         const cols = [
             { header: 'N° Inhumación', dataKey: 'numeroInhumacion' },
@@ -116,6 +118,7 @@ export class InhumacionesListComponent implements OnInit {
             { header: 'Acta', dataKey: 'numeroActa' },
             { header: 'Tipo Concesión', dataKey: 'tipoConcesion' },
             { header: 'Titular', dataKey: 'titularExport' },
+            { header: 'Pago', dataKey: 'pagoExport' },
             { header: 'Estado', dataKey: 'estado' }
         ];
         this.exportService.exportPdf(cols, exportData, 'Inhumaciones', 'Reporte de Inhumaciones');
@@ -130,6 +133,7 @@ export class InhumacionesListComponent implements OnInit {
             'Acata de Defunción': i.numeroActa || '-',
             'Tipo Concesión': i.tipoConcesion || '-',
             'Titular': i.titular ? `${i.titular.nombres} ${i.titular.apellidos}` : '-',
+            'Pago': i.pagos && i.pagos.length > 0 ? (i.pagos.some((p: any) => p.estado === 'PAGADO') ? 'PAGADO' : 'PENDIENTE') : 'POR PAGAR',
             'Estado': i.estado || '-'
         }));
         this.exportService.exportExcel(exportData, 'Inhumaciones');
@@ -152,10 +156,20 @@ export class InhumacionesListComponent implements OnInit {
     loadDifuntos(): void {
         this.difuntosService.getAll().subscribe({
             next: (data) => {
-                this.difuntos = data.map((d: any) => ({ label: `${d.nombres} ${d.apellidos} (${d.dni || 'S/D'})`, value: d.id }));
+                this.allDifuntos_raw = data;
+                this.updateDifuntosList();
             },
             error: (error) => console.error('Error loading difuntos:', error)
         });
+    }
+
+    updateDifuntosList(currentDifuntoId?: number): void {
+        this.difuntos = this.allDifuntos_raw
+            .filter(d => !d.inhumacion || d.id === currentDifuntoId)
+            .map((d: any) => ({ 
+                label: `${d.nombres} ${d.apellidos} (${d.dni || 'S/D'})`, 
+                value: d.id 
+            }));
     }
 
     loadSectores(): void {
@@ -219,6 +233,7 @@ export class InhumacionesListComponent implements OnInit {
     openNew(): void {
         this.inhumacion = {};
         this.submitted = false;
+        this.updateDifuntosList();
         this.updateEspaciosList(this.inhumacion.sectorId);
         this.inhumacionDialog = true;
     }
@@ -325,6 +340,8 @@ export class InhumacionesListComponent implements OnInit {
         if (this.inhumacion.espacio) this.inhumacion.espacioId = this.inhumacion.espacio.id;
         if (this.inhumacion.titular) this.inhumacion.titularId = this.inhumacion.titular.id;
 
+        this.updateDifuntosList(this.inhumacion.difuntoId);
+
         if (this.inhumacion.fechaInhumacion) this.inhumacion.fechaInhumacion = new Date(this.inhumacion.fechaInhumacion);
         if (this.inhumacion.fechaVencimiento) this.inhumacion.fechaVencimiento = new Date(this.inhumacion.fechaVencimiento);
         
@@ -341,14 +358,27 @@ export class InhumacionesListComponent implements OnInit {
             this.updateEspaciosList();
         }
 
+        // Initialize horaInhumacionDate from horaInhumacion string
+        if (this.inhumacion.horaInhumacion) {
+            const [hours, minutes] = this.inhumacion.horaInhumacion.split(':');
+            const date = new Date();
+            date.setHours(parseInt(hours), parseInt(minutes), 0, 0);
+            this.inhumacion.horaInhumacionDate = date;
+        } else {
+            this.inhumacion.horaInhumacionDate = null;
+        }
+
         this.inhumacionDialog = true;
     }
 
     deleteInhumacion(inhumacion: any): void {
         this.confirmationService.confirm({
-            message: '¿Está seguro de eliminar esta inhumación?',
-            header: 'Confirmar',
+            message: '¿Está seguro de eliminar esta inhumación? Esta acción es irreversible.',
+            header: 'Confirmar Eliminación',
             icon: 'pi pi-exclamation-triangle',
+            acceptLabel: 'Eliminar',
+            rejectLabel: 'Cancelar',
+            acceptButtonStyleClass: 'p-button-danger',
             accept: () => {
                 if (inhumacion.id) {
                     this.inhumacionesService.delete(inhumacion.id).subscribe({
@@ -358,6 +388,31 @@ export class InhumacionesListComponent implements OnInit {
                         },
                         error: () => {
                             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo eliminar la inhumación' });
+                        }
+                    });
+                }
+            }
+        });
+    }
+
+    anularInhumacion(inhumacion: any): void {
+        this.confirmationService.confirm({
+            message: `¿Está seguro de ANULAR la inhumación N° ${inhumacion.id}? El registro se mantendrá como ANULADO y el espacio quedará LIBRE.`,
+            header: 'Confirmar Anulación',
+            icon: 'pi pi-ban',
+            acceptLabel: 'Anular',
+            rejectLabel: 'Cancelar',
+            acceptButtonStyleClass: 'p-button-danger',
+            accept: () => {
+                if (inhumacion.id) {
+                    this.inhumacionesService.anular(inhumacion.id).subscribe({
+                        next: () => {
+                            this.messageService.add({ severity: 'warn', summary: 'Inhumación Anulada', detail: 'El registro fue anulado y el espacio liberado', life: 3000 });
+                            this.loadInhumaciones();
+                        },
+                        error: (err) => {
+                            console.error('Error anularInhumacion:', err);
+                            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo anular la inhumación' });
                         }
                     });
                 }
@@ -490,7 +545,17 @@ export class InhumacionesListComponent implements OnInit {
 
         const espacioCodigo = inhumacion.espacio?.codigo || '-';
         const espacioTipo = inhumacion.espacio?.tipoEspacio || '-';
-        const espacioUbicacion = inhumacion.espacio?.ubicacion || '-';
+        
+        let espacioUbicacion = '-';
+        if (inhumacion.espacio) {
+            const e = inhumacion.espacio;
+            const partes = [];
+            if (e.sector?.nombre) partes.push(`Sector: ${e.sector.nombre}`);
+            if (e.fila) partes.push(`Fila: ${e.fila}`);
+            if (e.columna) partes.push(`Col: ${e.columna}`);
+            if (e.numero) partes.push(`N°: ${e.numero}`);
+            espacioUbicacion = partes.length > 0 ? partes.join(', ') : '-';
+        }
 
         // Pagos logic summary
         let estadoPagoGlobal = 'POR PAGAR';

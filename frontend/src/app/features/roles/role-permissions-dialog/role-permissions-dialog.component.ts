@@ -21,6 +21,8 @@ interface PermisoMatrix {
     crear: boolean;
     actualizar: boolean;
     eliminar: boolean;
+    anular: boolean;
+    revertir: boolean;
 }
 
 @Component({
@@ -62,13 +64,13 @@ export class RolePermissionsDialogComponent implements OnInit {
         { nombre: 'Sectores', slug: 'sectores' },
         { nombre: 'Espacios', slug: 'espacios' },
         { nombre: 'Pagos', slug: 'pagos' },
-        { nombre: 'Conceptos de Pago', slug: 'conceptos_pago' },
+        { nombre: 'Conceptos de Pago', slug: 'conceptos' },
         { nombre: 'Usuarios', slug: 'usuarios' },
         { nombre: 'Roles', slug: 'roles' },
         { nombre: 'Permisos', slug: 'permisos' }
     ];
 
-    readonly ACCIONES = ['ver', 'crear', 'actualizar', 'eliminar'];
+    readonly ACCIONES = ['ver', 'crear', 'actualizar', 'eliminar', 'anular', 'revertir_anulacion'];
 
     ngOnInit() {
         this.loadPermisos();
@@ -122,7 +124,9 @@ export class RolePermissionsDialogComponent implements OnInit {
                 ver: hasPermiso('ver'),
                 crear: hasPermiso('crear'),
                 actualizar: hasPermiso('actualizar'),
-                eliminar: hasPermiso('eliminar')
+                eliminar: hasPermiso('eliminar'),
+                anular: hasPermiso('anular'),
+                revertir: hasPermiso('revertir_anulacion')
             };
         });
     }
@@ -132,7 +136,8 @@ export class RolePermissionsDialogComponent implements OnInit {
 
         this.permisosMatrix.forEach(row => {
             this.ACCIONES.forEach(accion => {
-                if ((row as any)[accion]) {
+                const isSelected = (accion === 'revertir_anulacion') ? (row as any).revertir : (row as any)[accion];
+                if (isSelected) {
                     const slug = `${accion}_${row.modulo.slug}`;
                     const permiso = this.permisos.find(p => p.slug === slug);
                     if (permiso) {
@@ -182,5 +187,10 @@ export class RolePermissionsDialogComponent implements OnInit {
         if (value && this.rol) {
             this.loadRolPermisos();
         }
+    }
+
+    hasPermisoInSystem(moduloSlug: string, accion: string): boolean {
+        const slug = `${accion}_${moduloSlug}`;
+        return this.permisos.some(p => p.slug === slug);
     }
 }

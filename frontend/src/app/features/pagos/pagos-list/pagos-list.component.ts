@@ -157,9 +157,9 @@ export class PagosListComponent implements OnInit {
         this.conceptosService.getAll().subscribe({
             next: (data) => {
                 this.conceptos = data.map((c: any) => ({
-                    label: `${c.nombre} - S/. ${c.monto}`,
+                    label: `${c.nombre} - S/. ${c.precioBase}`,
                     value: c.id,
-                    monto: c.monto
+                    monto: c.precioBase
                 }));
             },
             error: (error) => console.error('Error loading concepts:', error)
@@ -178,7 +178,16 @@ export class PagosListComponent implements OnInit {
         this.pago = { ...pago };
         // Map nested objects to IDs for p-select
         if (this.pago.titular) this.pago.titularId = this.pago.titular.id;
-        if (this.pago.conceptoPago) this.pago.conceptoPagoId = this.pago.conceptoPago.id;
+        
+        // El concepto ahora viene dentro de los detalles en la respuesta del backend
+        if (this.pago.detalles && this.pago.detalles.length > 0) {
+            this.pago.conceptoPagoId = this.pago.detalles[0].concepto?.id;
+        } else if (this.pago.conceptoPago) {
+            this.pago.conceptoPagoId = this.pago.conceptoPago.id;
+        }
+        
+        // Map montoTotal to monto for form binding
+        if (this.pago.montoTotal) this.pago.monto = this.pago.montoTotal;
 
         if (this.pago.fechaPago) this.pago.fechaPago = new Date(this.pago.fechaPago);
         this.pagoDialog = true;
@@ -209,6 +218,31 @@ export class PagosListComponent implements OnInit {
         });
     }
 
+    revertirAnulacion(pago: any) {
+        this.confirmationService.confirm({
+            message: `¿Está seguro de revertir la anulación del pago ${pago.codigoRecibo}? El pago volverá al estado PENDIENTE.`,
+            header: 'Confirmar Reversión',
+            icon: 'pi pi-refresh',
+            acceptLabel: 'Sí, Revertir',
+            rejectLabel: 'Cancelar',
+            acceptButtonStyleClass: 'p-button-warning',
+            accept: () => {
+                if (pago.id) {
+                    this.pagosService.revertirAnulacion(pago.id).subscribe({
+                        next: () => {
+                            this.messageService.add({ severity: 'info', summary: 'Anulación Revertida', detail: `El pago ${pago.codigoRecibo} ahora está PENDIENTE`, life: 3000 });
+                            this.loadPagos();
+                        },
+                        error: (err) => {
+                            console.error('Error in revertirAnulacion:', err);
+                            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo revertir la anulación del pago' });
+                        }
+                    });
+                }
+            }
+        });
+    }
+
     hideDialog() {
         this.pagoDialog = false;
         this.submitted = false;
@@ -222,6 +256,13 @@ export class PagosListComponent implements OnInit {
             metodoPago: 'EFECTIVO',
             estado: 'PENDIENTE' // Default to Pendiente so "Cobrar" flow can be used
         };
+
+        // Seleccionar el primer concepto por defecto si existe
+        if (this.conceptos.length > 0) {
+            this.pago.conceptoPagoId = this.conceptos[0].value;
+            this.pago.monto = this.conceptos[0].monto;
+        }
+
         this.submitted = false;
         this.pagoDialog = true;
     }
@@ -328,6 +369,14 @@ export class PagosListComponent implements OnInit {
     }
 
     imprimirRecibo(pago: any) {
+        if (!pago || pago.estado !== 'PAGADO') {
+            this.messageService.add({ 
+                severity: 'warn', 
+                summary: 'Acción no permitida', 
+                detail: 'Solo se pueden imprimir recibos de pagos confirmados.' 
+            });
+            return;
+        }
         const ventanaImpresion = window.open('', '', 'width=800,height=600');
         if (!ventanaImpresion) {
             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo abrir la ventana de impresión' });

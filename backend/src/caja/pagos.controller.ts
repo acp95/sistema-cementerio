@@ -72,4 +72,13 @@ export class PagosController {
     anularPago(@Param('id', ParseIntPipe) id: number) {
         return this.pagosService.anularPago(id);
     }
+
+    @Patch(':id/revertir-anulacion')
+    @ApiOperation({ summary: 'Revertir la anulación de un pago' })
+    @ApiParam({ name: 'id', description: 'ID del pago' })
+    @ApiResponse({ status: 200, description: 'Anulación revertida' })
+    @ApiResponse({ status: 404, description: 'Pago no encontrado' })
+    revertirAnulacion(@Param('id', ParseIntPipe) id: number) {
+        return this.pagosService.revertirAnulacion(id);
+    }
 }

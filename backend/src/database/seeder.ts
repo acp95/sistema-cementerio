@@ -179,6 +179,7 @@ export class DatabaseSeeder {
             { slug: 'crear_inhumaciones', descripcion: 'Crear nuevas inhumaciones' },
             { slug: 'actualizar_inhumaciones', descripcion: 'Actualizar inhumaciones' },
             { slug: 'eliminar_inhumaciones', descripcion: 'Eliminar inhumaciones' },
+            { slug: 'anular_inhumaciones', descripcion: 'Anular inhumaciones (libera el espacio)' },
             // Sectores
             { slug: 'ver_sectores', descripcion: 'Ver listado de sectores' },
             { slug: 'crear_sectores', descripcion: 'Crear nuevos sectores' },
@@ -200,6 +201,7 @@ export class DatabaseSeeder {
             { slug: 'actualizar_pagos', descripcion: 'Actualizar pagos' },
             { slug: 'eliminar_pagos', descripcion: 'Eliminar pagos' },
             { slug: 'anular_pagos', descripcion: 'Anular pagos registrados' },
+            { slug: 'revertir_anulacion_pagos', descripcion: 'Revertir la anulación de un pago' },
             // Usuarios
             { slug: 'ver_usuarios', descripcion: 'Ver listado de usuarios' },
             { slug: 'crear_usuarios', descripcion: 'Crear nuevos usuarios' },

@@ -16,6 +16,10 @@ export class AuthService {
     private readonly TOKEN_KEY = 'access_token';
     private readonly USER_KEY = 'current_user';
     private readonly PERMISSIONS_KEY = 'user_permissions';
+    
+    // Configuración de inactividad (10 minutos)
+    private readonly INACTIVITY_TIME = 10 * 60 * 1000;
+    private inactivityTimer: any;
 
     private currentUserSubject = new BehaviorSubject<Usuario | null>(this.getUserFromStorage());
     public currentUser$ = this.currentUserSubject.asObservable();
@@ -29,6 +33,37 @@ export class AuthService {
         // Verificar si hay un token al iniciar
         if (this.hasToken()) {
             this.loadUserFromStorage();
+            this.initInactivityTimer();
+        }
+    }
+
+    /**
+     * Inicializar el temporizador de inactividad
+     */
+    private initInactivityTimer(): void {
+        this.resetInactivityTimer();
+        
+        // Escuchar eventos de actividad del usuario
+        const events = ['mousemove', 'mousedown', 'keydown', 'touchstart', 'scroll'];
+        events.forEach(event => {
+            window.addEventListener(event, () => this.resetInactivityTimer());
+        });
+    }
+
+    /**
+     * Reiniciar el temporizador
+     */
+    private resetInactivityTimer(): void {
+        if (this.inactivityTimer) {
+            clearTimeout(this.inactivityTimer);
+        }
+        
+        if (this.hasToken()) {
+            this.inactivityTimer = setTimeout(() => {
+                this.logout();
+                // Opcional: Recargar la página o mostrar mensaje
+                location.reload(); 
+            }, this.INACTIVITY_TIME);
         }
     }
 
@@ -37,7 +72,10 @@ export class AuthService {
      */
     login(credentials: LoginDto): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(`${this.apiUrl}/login`, credentials).pipe(
-            tap(response => this.handleAuthResponse(response)),
+            tap(response => {
+                this.handleAuthResponse(response);
+                this.initInactivityTimer();
+            }),
             catchError(this.handleError)
         );
     }
@@ -47,7 +85,10 @@ export class AuthService {
      */
     register(userData: RegisterDto): Observable<AuthResponse> {
         return this.http.post<AuthResponse>(`${this.apiUrl}/register`, userData).pipe(
-            tap(response => this.handleAuthResponse(response)),
+            tap(response => {
+                this.handleAuthResponse(response);
+                this.initInactivityTimer();
+            }),
             catchError(this.handleError)
         );
     }
@@ -56,9 +97,12 @@ export class AuthService {
      * Cerrar sesión
      */
     logout(): void {
-        localStorage.removeItem(this.TOKEN_KEY);
-        localStorage.removeItem(this.USER_KEY);
-        localStorage.removeItem(this.PERMISSIONS_KEY);
+        if (this.inactivityTimer) {
+            clearTimeout(this.inactivityTimer);
+        }
+        sessionStorage.removeItem(this.TOKEN_KEY);
+        sessionStorage.removeItem(this.USER_KEY);
+        sessionStorage.removeItem(this.PERMISSIONS_KEY);
         this.currentUserSubject.next(null);
         this.isAuthenticated.set(false);
         this.currentUser.set(null);
@@ -70,7 +114,7 @@ export class AuthService {
      * Obtener token actual
      */
     getToken(): string | null {
-        return localStorage.getItem(this.TOKEN_KEY);
+        return sessionStorage.getItem(this.TOKEN_KEY);
     }
 
     /**
@@ -122,12 +166,12 @@ export class AuthService {
      * Manejar respuesta de autenticación
      */
     private handleAuthResponse(response: AuthResponse): void {
-        localStorage.setItem(this.TOKEN_KEY, response.access_token);
-        localStorage.setItem(this.USER_KEY, JSON.stringify(response.user));
+        sessionStorage.setItem(this.TOKEN_KEY, response.access_token);
+        sessionStorage.setItem(this.USER_KEY, JSON.stringify(response.user));
 
         // Guardar permisos
         const permisos = (response.user as any).permisos || [];
-        localStorage.setItem(this.PERMISSIONS_KEY, JSON.stringify(permisos));
+        sessionStorage.setItem(this.PERMISSIONS_KEY, JSON.stringify(permisos));
 
         this.currentUserSubject.next(response.user);
         this.isAuthenticated.set(true);
@@ -136,7 +180,7 @@ export class AuthService {
     }
 
     /**
-     * Cargar usuario desde localStorage
+     * Cargar usuario desde sessionStorage
      */
     private loadUserFromStorage(): void {
         const user = this.getUserFromStorage();
@@ -150,10 +194,10 @@ export class AuthService {
     }
 
     /**
-     * Obtener usuario de localStorage
+     * Obtener usuario de sessionStorage
      */
     private getUserFromStorage(): Usuario | null {
-        const userJson = localStorage.getItem(this.USER_KEY);
+        const userJson = sessionStorage.getItem(this.USER_KEY);
         if (userJson) {
             try {
                 return JSON.parse(userJson);
@@ -165,10 +209,10 @@ export class AuthService {
     }
 
     /**
-     * Obtener permisos de localStorage
+     * Obtener permisos de sessionStorage
      */
     private getPermissionsFromStorage(): string[] {
-        const permissionsJson = localStorage.getItem(this.PERMISSIONS_KEY);
+        const permissionsJson = sessionStorage.getItem(this.PERMISSIONS_KEY);
         if (permissionsJson) {
             try {
                 return JSON.parse(permissionsJson);

@@ -76,4 +76,13 @@ export class InhumacionesController {
     remove(@Param('id', ParseIntPipe) id: number) {
         return this.inhumacionesService.remove(id);
     }
+
+    @Patch(':id/anular')
+    @ApiOperation({ summary: 'Anular una inhumación (libera el espacio y mantiene registro)' })
+    @ApiParam({ name: 'id', description: 'ID de la inhumación' })
+    @ApiResponse({ status: 200, description: 'Inhumación anulada y espacio liberado' })
+    @ApiResponse({ status: 404, description: 'Inhumación no encontrada' })
+    anular(@Param('id', ParseIntPipe) id: number) {
+        return this.inhumacionesService.anular(id);
+    }
 }

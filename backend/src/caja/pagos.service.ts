@@ -62,7 +62,9 @@ export class PagosService {
                 titular: {
                     id: true,
                     nombres: true,
-                    apellidos: true
+                    apellidos: true,
+                    dni: true,
+                    telefono: true
                 },
                 usuario: {
                     id: true,
@@ -73,7 +75,8 @@ export class PagosService {
                     difunto: {
                         id: true,
                         nombres: true,
-                        apellidos: true
+                        apellidos: true,
+                        dni: true
                     }
                 },
                 detalles: {
@@ -135,6 +138,12 @@ export class PagosService {
     async anularPago(id: number): Promise<Pago> {
         const pago = await this.findOne(id);
         pago.estado = 'ANULADO';
+        return await this.pagosRepository.save(pago);
+    }
+
+    async revertirAnulacion(id: number): Promise<Pago> {
+        const pago = await this.findOne(id);
+        pago.estado = 'PENDIENTE';
         return await this.pagosRepository.save(pago);
     }
 }

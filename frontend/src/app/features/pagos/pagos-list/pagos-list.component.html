@@ -83,12 +83,15 @@
                     <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
                         (onClick)="editPago(pago)" pTooltip="Editar"
                         *ngIf="pago.estado !== 'ANULADO' && authService.hasPermission('actualizar_pagos')" />
-                    <p-button *ngIf="pago.estado !== 'ANULADO'" icon="pi pi-print" severity="secondary" class="mr-2"
+                    <p-button *ngIf="pago.estado === 'PAGADO'" icon="pi pi-print" severity="secondary" class="mr-2"
                         [rounded]="true" size="small" [text]="true" (onClick)="imprimirRecibo(pago)"
                         pTooltip="Imprimir Recibo" />
                     <p-button *ngIf="pago.estado !== 'ANULADO' && authService.hasPermission('anular_pagos')"
                         icon="pi pi-ban" label="Anular" severity="danger" class="mr-2" [rounded]="true" size="small"
                         (onClick)="anularPago(pago)" pTooltip="Anular pago" />
+                    <p-button *ngIf="pago.estado === 'ANULADO' && authService.hasPermission('revertir_anulacion_pagos')"
+                        icon="pi pi-refresh" label="Revertir" severity="warn" class="mr-2" [rounded]="true" size="small"
+                        (onClick)="revertirAnulacion(pago)" pTooltip="Revertir anulación" />
                 </td>
             </tr>
         </ng-template>

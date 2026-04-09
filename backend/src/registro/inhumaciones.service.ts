@@ -98,22 +98,33 @@ export class InhumacionesService {
 
     async findAll(): Promise<Inhumacion[]> {
         return await this.inhumacionesRepository.find({
-            relations: ['difunto', 'espacio', 'espacio.sector', 'titular'],
+            relations: ['difunto', 'espacio', 'espacio.sector', 'titular', 'pagos'],
             select: {
                 id: true,
                 fechaInhumacion: true,
                 estado: true,
                 fechaVencimiento: true,
+                tipoConcesion: true,
+                horaInhumacion: true,
+                numeroActa: true,
+                observaciones: true,
+                difuntoId: true,
+                espacioId: true,
+                titularId: true,
                 difunto: {
                     id: true,
                     nombres: true,
                     apellidos: true,
-                    dni: true
+                    dni: true,
+                    sexo: true
                 },
                 espacio: {
                     id: true,
                     codigo: true,
                     tipoEspacio: true,
+                    fila: true,
+                    columna: true,
+                    numero: true,
                     sector: {
                         id: true,
                         nombre: true
@@ -122,7 +133,14 @@ export class InhumacionesService {
                 titular: {
                     id: true,
                     nombres: true,
-                    apellidos: true
+                    apellidos: true,
+                    dni: true,
+                    telefono: true
+                },
+                pagos: {
+                    id: true,
+                    estado: true,
+                    montoTotal: true
                 }
             },
             order: { id: 'DESC' },
@@ -145,7 +163,7 @@ export class InhumacionesService {
     async findByDifunto(difuntoId: number): Promise<Inhumacion> {
         const inhumacion = await this.inhumacionesRepository.findOne({
             where: { difuntoId },
-            relations: ['difunto', 'espacio', 'titular'],
+            relations: ['difunto', 'espacio', 'titular', 'pagos'],
         });
 
         if (!inhumacion) {
@@ -176,5 +194,15 @@ export class InhumacionesService {
         await this.espaciosService.marcarLibre(inhumacion.espacioId);
 
         await this.inhumacionesRepository.remove(inhumacion);
+    }
+
+    async anular(id: number): Promise<Inhumacion> {
+        const inhumacion = await this.findOne(id);
+
+        // Liberar el espacio
+        await this.espaciosService.marcarLibre(inhumacion.espacioId);
+
+        inhumacion.estado = 'ANULADO';
+        return await this.inhumacionesRepository.save(inhumacion);
     }
 }
