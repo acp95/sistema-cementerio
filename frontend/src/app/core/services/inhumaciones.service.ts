@@ -57,6 +57,13 @@ export class InhumacionesService {
         );
     }
 
+    revertirAnulacion(id: number): Observable<Inhumacion> {
+        return this.http.patch<Inhumacion>(`${this.apiUrl}/${id}/revertir-anulacion`, {}).pipe(
+            catchError(this.handleError)
+        );
+    }
+
+
     private handleError(error: any): Observable<never> {
         console.error('Error en InhumacionesService:', error);
         return throwError(() => error);

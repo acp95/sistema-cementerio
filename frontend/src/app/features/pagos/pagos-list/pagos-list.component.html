@@ -2,107 +2,158 @@
     <p-toast />
     <p-toolbar styleClass="mb-6">
         <ng-template #start>
-            <p-button label="Nuevo Pago" icon="pi pi-plus" class="mr-2" (onClick)="openNew()"
+            <p-button label="Nuevo Pago" icon="pi pi-plus" class="mr-2" (click)="openNew()"
                 *ngIf="authService.hasPermission('crear_pagos')" />
         </ng-template>
 
         <ng-template #end>
-            <p-button label="Excel" icon="pi pi-file-excel" severity="success" class="mr-2" (onClick)="exportExcel()" />
-            <p-button label="PDF" icon="pi pi-file-pdf" severity="danger" class="mr-2" (onClick)="exportPdf()" />
+            <p-button label="Excel" icon="pi pi-file-excel" severity="success" class="mr-2" (click)="exportExcel()" />
+            <p-button label="PDF" icon="pi pi-file-pdf" severity="danger" class="mr-2" (click)="exportPdf()" />
         </ng-template>
     </p-toolbar>
 
     <p-table #dt [value]="pagos" [rows]="10" [paginator]="true"
         [globalFilterFields]="['titular.nombres', 'titular.apellidos', 'codigoRecibo', 'estado']"
-        [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pagos" [showCurrentPageReport]="true">
+        [tableStyle]="{ 'min-width': '75rem' }" 
+        [rowHover]="true" 
+        dataKey="id"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} pagos registrados" 
+        [showCurrentPageReport]="true"
+        styleClass="p-datatable-modern">
+        
         <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Gestión de Caja</h5>
-                <p-iconfield>
+            <div class="flex items-center justify-between pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-green-100 rounded-xl">
+                        <i class="pi pi-wallet text-green-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 text-xl font-bold tracking-tight">Gestión de Caja y Pagos</h5>
+                        <p class="text-sm text-gray-500 m-0">Control de ingresos, recibos y conceptos de pago</p>
+                    </div>
+                </div>
+                <p-iconfield styleClass="w-80">
                     <p-inputicon styleClass="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por Recibo, Titular o Estado..." class="w-full rounded-xl border-gray-200" />
                 </p-iconfield>
             </div>
         </ng-template>
+
         <ng-template #header>
             <tr>
-                <th pSortableColumn="codigoRecibo">
+                <th pSortableColumn="codigoRecibo" style="width: 140px">
                     Recibo <p-sortIcon field="codigoRecibo" />
                 </th>
-                <th pSortableColumn="fechaPago">
+                <th pSortableColumn="fechaPago" style="width: 130px">
                     Fecha <p-sortIcon field="fechaPago" />
                 </th>
-                <th pSortableColumn="titular.nombres" style="min-width:10rem">
-                    Titular <p-sortIcon field="titular.nombres" />
+                <th pSortableColumn="titular.nombres" style="min-width:18rem">
+                    Titular Responsable <p-sortIcon field="titular.nombres" />
                 </th>
-                <th style="min-width:10rem">
-                    Difunto
+                <th style="min-width:14rem">
+                    Concepto Principal
                 </th>
-                <th style="min-width:12rem">
-                    Concepto
+                <th pSortableColumn="montoTotal" style="width: 140px">
+                    Monto Total <p-sortIcon field="montoTotal" />
                 </th>
-                <th pSortableColumn="montoTotal">
-                    Monto <p-sortIcon field="montoTotal" />
-                </th>
-                <th pSortableColumn="estado">
+                <th pSortableColumn="estado" style="width: 130px">
                     Estado <p-sortIcon field="estado" />
                 </th>
-                <th style="min-width: 14rem">Acciones</th>
+                <th style="width: 220px" class="text-center">Acciones</th>
             </tr>
         </ng-template>
+
         <ng-template #body let-pago>
-            <tr>
-                <td>{{ pago.codigoRecibo || '-' }}</td>
-                <td>{{ pago.fechaPago | date:'dd/MM/yyyy' }}</td>
-                <td>{{ pago.titular?.nombres }} {{ pago.titular?.apellidos }}</td>
+            <tr [ngClass]="{'opacity-60 grayscale bg-gray-50': pago.estado === 'ANULADO'}">
                 <td>
-                    <span *ngIf="pago.inhumacion?.difunto">
-                        {{ pago.inhumacion.difunto.nombres }} {{ pago.inhumacion.difunto.apellidos }}
+                    <div class="flex items-center gap-2">
+                        <i class="pi pi-ticket text-gray-400 text-xs"></i>
+                        <span class="font-mono font-bold text-gray-700">{{ pago.codigoRecibo || '---' }}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-medium text-gray-700">{{ pago.fechaPago | date:'dd/MM/yyyy' }}</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-tighter">{{ pago.metodoPago }}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="avatar-cell">
+                        <div class="avatar-circle" [style.background]="pago.estado === 'ANULADO' ? '#cbd5e1' : ''">
+                            {{ getInitials(pago.titular?.nombres, pago.titular?.apellidos) }}
+                        </div>
+                        <div class="info">
+                            <span class="main-text">{{ pago.titular?.nombres }} {{ pago.titular?.apellidos }}</span>
+                            <span class="sub-text" *ngIf="pago.inhumacion?.difunto">
+                                Ref: {{ pago.inhumacion.difunto.nombres }} {{ pago.inhumacion.difunto.apellidos }}
+                            </span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex items-center gap-2">
+                        <span class="text-sm text-gray-700 border-b border-gray-100 pb-0.5">
+                            {{ pago.detalles?.length > 0 ? pago.detalles[0].concepto?.nombre : 'Pago General' }}
+                        </span>
+                        <span *ngIf="pago.detalles?.length > 1" class="px-1.5 py-0.5 bg-gray-200 rounded text-[10px] font-bold text-gray-600">
+                            +{{ pago.detalles.length - 1 }}
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <span class="text-lg font-bold text-gray-800 tracking-tighter">
+                        S/. {{ pago.montoTotal | number:'1.2-2' }}
                     </span>
-                    <span *ngIf="!pago.inhumacion?.difunto" class="text-gray-400">-</span>
                 </td>
                 <td>
-                    <span *ngIf="pago.detalles?.length > 0">
-                        {{ pago.detalles[0].concepto?.nombre || 'Sin concepto' }}
-                        <span *ngIf="pago.detalles.length > 1" class="text-gray-500">(+{{ pago.detalles.length - 1
-                            }})</span>
-                    </span>
-                    <span *ngIf="!pago.detalles?.length">-</span>
+                    <div [ngSwitch]="pago.estado">
+                        <span *ngSwitchCase="'PAGADO'" class="status-badge status-paid">
+                            <i class="pi pi-check-circle"></i> PAGADO
+                        </span>
+                        <span *ngSwitchCase="'PENDIENTE'" class="status-badge status-pending">
+                            <i class="pi pi-clock"></i> PENDIENTE
+                        </span>
+                        <span *ngSwitchCase="'ANULADO'" class="status-badge status-annulled">
+                            <i class="pi pi-ban"></i> ANULADO
+                        </span>
+                    </div>
                 </td>
-                <td class="font-bold">S/. {{ pago.montoTotal | number:'1.2-2' }}</td>
                 <td>
-                    <p-tag *ngIf="pago.estado === 'PENDIENTE'" [value]="'Pendiente'" severity="warn" />
-                    <p-tag *ngIf="pago.estado === 'PAGADO'" [value]="'Pagado'" severity="success" />
-                    <p-tag *ngIf="pago.estado === 'ANULADO'" [value]="'Anulado'" severity="danger" />
-                </td>
-                <td>
-                    <p-button *ngIf="pago.estado === 'PENDIENTE' && authService.hasPermission('actualizar_pagos')"
-                        icon="pi pi-money-bill" label="Cobrar" severity="success" class="mr-2" [rounded]="true"
-                        size="small" (onClick)="cobrarPago(pago)" pTooltip="Registrar cobro" />
-                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                        (onClick)="editPago(pago)" pTooltip="Editar"
-                        *ngIf="pago.estado !== 'ANULADO' && authService.hasPermission('actualizar_pagos')" />
-                    <p-button *ngIf="pago.estado === 'PAGADO'" icon="pi pi-print" severity="secondary" class="mr-2"
-                        [rounded]="true" size="small" [text]="true" (onClick)="imprimirRecibo(pago)"
-                        pTooltip="Imprimir Recibo" />
-                    <p-button *ngIf="pago.estado !== 'ANULADO' && authService.hasPermission('anular_pagos')"
-                        icon="pi pi-ban" label="Anular" severity="danger" class="mr-2" [rounded]="true" size="small"
-                        (onClick)="anularPago(pago)" pTooltip="Anular pago" />
-                    <p-button *ngIf="pago.estado === 'ANULADO' && authService.hasPermission('revertir_anulacion_pagos')"
-                        icon="pi pi-refresh" label="Revertir" severity="warn" class="mr-2" [rounded]="true" size="small"
-                        (onClick)="revertirAnulacion(pago)" pTooltip="Revertir anulación" />
+                    <div class="action-buttons justify-center">
+                        <p-button *ngIf="pago.estado === 'PENDIENTE' && authService.hasPermission('registrar_cobro')"
+                            icon="pi pi-money-bill" severity="success" [rounded]="true" [text]="true"
+                            (click)="cobrarPago(pago)" pTooltip="Registrar cobro ahora" />
+                        
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                            (click)="editPago(pago)" pTooltip="Editar información"
+                            *ngIf="pago.estado !== 'ANULADO' && authService.hasPermission('actualizar_pagos')" />
+                        
+                        <p-button *ngIf="pago.estado === 'PAGADO'" icon="pi pi-print" severity="secondary"
+                            [rounded]="true" [text]="true" (click)="imprimirRecibo(pago)"
+                            pTooltip="Imprimir Comprobante" />
+                        
+                        <p-button *ngIf="pago.estado !== 'ANULADO' && authService.hasPermission('anular_pagos')"
+                            icon="pi pi-ban" severity="danger" [rounded]="true" [text]="true"
+                            (click)="anularPago(pago)" pTooltip="Anular movimiento" />
+                        
+                        <p-button *ngIf="pago.estado === 'ANULADO' && authService.hasPermission('anular_pagos')"
+                            icon="pi pi-refresh" severity="warn" [rounded]="true" [text]="true"
+                            (click)="revertirAnulacion(pago)" pTooltip="Restaurar cobro" />
+                    </div>
                 </td>
             </tr>
         </ng-template>
         <ng-template #emptymessage>
             <tr>
-                <td colspan="8" class="text-center">No se encontraron pagos.</td>
+                <td colspan="7" class="text-center py-8">
+                    <i class="pi pi-search-minus text-3xl text-gray-300 block mb-3"></i>
+                    <span class="text-gray-500">No se encontraron registros de caja.</span>
+                </td>
             </tr>
         </ng-template>
     </p-table>
 
-    <p-dialog [(visible)]="pagoDialog" [style]="{ width: '500px' }" header="Detalles del Pago" [modal]="true"
+    <p-dialog [(visible)]="pagoDialog" [style]="{ width: '500px', maxWidth: '95vw' }" header="Detalles del Pago" [modal]="true"
         class="p-fluid">
         <ng-template #content>
             <div class="flex flex-col gap-6">
@@ -177,5 +228,5 @@
         </ng-template>
     </p-dialog>
 
-    <p-confirmDialog [style]="{ width: '450px' }" />
+    <p-confirmDialog [style]="{ width: '450px', maxWidth: '95vw' }" />
 </div>

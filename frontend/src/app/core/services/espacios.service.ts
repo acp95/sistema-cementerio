@@ -78,6 +78,15 @@ export class EspaciosService {
     }
 
     /**
+     * Reservar un espacio para un titular
+     */
+    reservar(id: number, titularId: number): Observable<Espacio> {
+        return this.http.post<Espacio>(`${this.apiUrl}/${id}/reservar`, { titularId }).pipe(
+            catchError(this.handleError)
+        );
+    }
+
+    /**
      * Manejar errores HTTP
      */
     private handleError(error: any): Observable<never> {

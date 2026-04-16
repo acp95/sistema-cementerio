@@ -64,6 +64,7 @@ CREATE TABLE espacios (
     estado VARCHAR(20) DEFAULT 'LIBRE', -- LIBRE, OCUPADO, MANTENIMIENTO, RESERVADO
     coordenadas_lat DECIMAL(10, 8), -- Para ubicar el punto exacto en el mapa
     coordenadas_lng DECIMAL(11, 8),
+    titular_id INT REFERENCES titulares (id), -- Para reservas sin inhumación
     CONSTRAINT check_estado CHECK (
         estado IN (
             'LIBRE',

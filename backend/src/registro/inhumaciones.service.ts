@@ -205,4 +205,27 @@ export class InhumacionesService {
         inhumacion.estado = 'ANULADO';
         return await this.inhumacionesRepository.save(inhumacion);
     }
+
+    async revertirAnulacion(id: number): Promise<Inhumacion> {
+        const inhumacion = await this.findOne(id);
+
+        if (inhumacion.estado !== 'ANULADO') {
+            throw new BadRequestException('Solo se pueden revertir inhumaciones que estén ANULADAS');
+        }
+
+        // Verificar si el espacio sigue libre antes de re-ocuparlo
+        const espacio = await this.espaciosService.findOne(inhumacion.espacioId);
+        if (espacio.estado !== EstadoEspacio.LIBRE) {
+            throw new ConflictException(
+                `No se puede revertir la anulación. El espacio ${espacio.codigo} ya está ${espacio.estado}.`,
+            );
+        }
+
+        // Re-ocupar el espacio
+        await this.espaciosService.marcarOcupado(inhumacion.espacioId);
+
+        inhumacion.estado = 'ACTIVO';
+        return await this.inhumacionesRepository.save(inhumacion);
+    }
 }
+

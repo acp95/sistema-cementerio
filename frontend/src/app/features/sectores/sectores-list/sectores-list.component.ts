@@ -24,6 +24,9 @@ import { RadioButtonModule } from 'primeng/radiobutton';
 import { InputNumberModule } from 'primeng/inputnumber';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
+import { CardModule } from 'primeng/card';
+import { ProgressBarModule } from 'primeng/progressbar';
+import { ProgressSpinnerModule } from 'primeng/progressspinner';
 
 @Component({
     selector: 'app-sectores-list',
@@ -43,8 +46,10 @@ import { InputIconModule } from 'primeng/inputicon';
         DialogModule,
         RadioButtonModule,
         InputNumberModule,
-        IconFieldModule,
-        InputIconModule
+        InputIconModule,
+        CardModule,
+        ProgressBarModule,
+        ProgressSpinnerModule
     ],
     providers: [MessageService, ConfirmationService],
     templateUrl: './sectores-list.component.html',
@@ -207,5 +212,17 @@ export class SectoresListComponent implements OnInit {
 
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
+    }
+
+    // UI Helpers
+    getLibresCount(sector: Sector): number {
+        if (!sector.espacios) return 0;
+        return sector.espacios.filter(e => e.estado === 'LIBRE').length;
+    }
+
+    getOccupancyPercent(sector: Sector): number {
+        if (!sector.capacidadTotal || !sector.espacios) return 0;
+        const ocupados = sector.espacios.filter(e => e.estado !== 'LIBRE').length;
+        return Math.round((ocupados / sector.capacidadTotal) * 100);
     }
 }

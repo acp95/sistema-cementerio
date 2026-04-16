@@ -8,6 +8,7 @@ import {
 } from 'typeorm';
 import { Sector } from './sector.entity';
 import { Inhumacion } from '../../registro/entities/inhumacion.entity';
+import { Titular } from '../../registro/entities/titular.entity';
 
 export enum EstadoEspacio {
     LIBRE = 'LIBRE',
@@ -60,14 +61,15 @@ export class Espacio {
     })
     coordenadasLat: number;
 
-    @Column({
-        name: 'coordenadas_lng',
-        type: 'decimal',
-        precision: 11,
-        scale: 8,
-        nullable: true,
-    })
+    @Column({ name: 'coordenadas_lng', type: 'decimal', precision: 11, scale: 8, nullable: true })
     coordenadasLng: number;
+
+    @Column({ name: 'titular_id', nullable: true })
+    titularId: number;
+
+    @ManyToOne(() => Titular)
+    @JoinColumn({ name: 'titular_id' })
+    titular: Titular;
 
     @ManyToOne(() => Sector, (sector) => sector.espacios)
     @JoinColumn({ name: 'sector_id' })

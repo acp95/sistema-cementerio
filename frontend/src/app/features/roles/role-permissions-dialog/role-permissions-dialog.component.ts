@@ -23,6 +23,7 @@ interface PermisoMatrix {
     eliminar: boolean;
     anular: boolean;
     revertir: boolean;
+    cobrar: boolean;
 }
 
 @Component({
@@ -67,10 +68,11 @@ export class RolePermissionsDialogComponent implements OnInit {
         { nombre: 'Conceptos de Pago', slug: 'conceptos' },
         { nombre: 'Usuarios', slug: 'usuarios' },
         { nombre: 'Roles', slug: 'roles' },
-        { nombre: 'Permisos', slug: 'permisos' }
+        { nombre: 'Permisos', slug: 'permisos' },
+        { nombre: 'Respaldos', slug: 'respaldos' }
     ];
 
-    readonly ACCIONES = ['ver', 'crear', 'actualizar', 'eliminar', 'anular', 'revertir_anulacion'];
+    readonly ACCIONES = ['ver', 'crear', 'actualizar', 'eliminar', 'anular', 'revertir_anulacion', 'cobrar'];
 
     ngOnInit() {
         this.loadPermisos();
@@ -106,10 +108,17 @@ export class RolePermissionsDialogComponent implements OnInit {
         });
     }
 
+    private getSlugForAccion(moduloSlug: string, accion: string): string {
+        if (accion === 'cobrar' && moduloSlug === 'pagos') {
+            return 'registrar_cobro';
+        }
+        return `${accion}_${moduloSlug}`;
+    }
+
     buildMatrix(permisosIds: number[]) {
         this.permisosMatrix = this.MODULOS.map(modulo => {
             const getPermisoId = (accion: string): number | null => {
-                const slug = `${accion}_${modulo.slug}`;
+                const slug = this.getSlugForAccion(modulo.slug, accion);
                 const permiso = this.permisos.find(p => p.slug === slug);
                 return permiso ? permiso.id : null;
             };
@@ -126,7 +135,8 @@ export class RolePermissionsDialogComponent implements OnInit {
                 actualizar: hasPermiso('actualizar'),
                 eliminar: hasPermiso('eliminar'),
                 anular: hasPermiso('anular'),
-                revertir: hasPermiso('revertir_anulacion')
+                revertir: hasPermiso('revertir_anulacion'),
+                cobrar: hasPermiso('cobrar')
             };
         });
     }
@@ -136,9 +146,15 @@ export class RolePermissionsDialogComponent implements OnInit {
 
         this.permisosMatrix.forEach(row => {
             this.ACCIONES.forEach(accion => {
-                const isSelected = (accion === 'revertir_anulacion') ? (row as any).revertir : (row as any)[accion];
+                let isSelected = false;
+                if (accion === 'revertir_anulacion') {
+                    isSelected = row.revertir;
+                } else {
+                    isSelected = (row as any)[accion];
+                }
+
                 if (isSelected) {
-                    const slug = `${accion}_${row.modulo.slug}`;
+                    const slug = this.getSlugForAccion(row.modulo.slug, accion);
                     const permiso = this.permisos.find(p => p.slug === slug);
                     if (permiso) {
                         ids.push(permiso.id);
@@ -190,7 +206,10 @@ export class RolePermissionsDialogComponent implements OnInit {
     }
 
     hasPermisoInSystem(moduloSlug: string, accion: string): boolean {
-        const slug = `${accion}_${moduloSlug}`;
+        let slug = `${accion}_${moduloSlug}`;
+        if (accion === 'cobrar' && moduloSlug === 'pagos') {
+            slug = 'registrar_cobro';
+        }
         return this.permisos.some(p => p.slug === slug);
     }
 }

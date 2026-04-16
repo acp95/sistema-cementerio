@@ -13,62 +13,105 @@
     </p-toolbar>
 
     <p-table #dt [value]="titulares" [rows]="10" [paginator]="true"
-        [globalFilterFields]="['nombres', 'apellidos', 'dni', 'email']" [tableStyle]="{ 'min-width': '75rem' }"
-        [rowHover]="true" dataKey="id"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} titulares"
-        [showCurrentPageReport]="true">
+        [globalFilterFields]="['nombres', 'apellidos', 'dni', 'email']" 
+        [tableStyle]="{ 'min-width': '75rem' }"
+        [rowHover]="true" 
+        dataKey="id"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} titulares registrados"
+        [showCurrentPageReport]="true"
+        styleClass="p-datatable-modern">
+        
         <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Gestión de Titulares</h5>
-                <p-iconfield>
+            <div class="flex items-center justify-between pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-blue-100 rounded-xl">
+                        <i class="pi pi-id-card text-blue-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 text-xl font-bold tracking-tight">Gestión de Titulares</h5>
+                        <p class="text-sm text-gray-500 m-0">Administración de clientes y responsables</p>
+                    </div>
+                </div>
+                <p-iconfield styleClass="w-80">
                     <p-inputicon styleClass="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por Nombre, DNI o Email..." class="w-full rounded-xl border-gray-200" />
                 </p-iconfield>
             </div>
         </ng-template>
+
         <ng-template #header>
             <tr>
-                <th pSortableColumn="nombres" style="min-width:14rem">
-                    Nombres <p-sortIcon field="nombres" />
+                <th pSortableColumn="nombres" style="min-width:20rem">
+                    Titular <p-sortIcon field="nombres" />
                 </th>
-                <th pSortableColumn="apellidos" style="min-width:14rem">
-                    Apellidos <p-sortIcon field="apellidos" />
-                </th>
-                <th pSortableColumn="dni">
+                <th pSortableColumn="dni" style="width: 150px">
                     DNI <p-sortIcon field="dni" />
                 </th>
-                <th pSortableColumn="telefono">
-                    Teléfono <p-sortIcon field="telefono" />
+                <th pSortableColumn="telefono" style="width: 180px">
+                    Contacto <p-sortIcon field="telefono" />
                 </th>
-                <th pSortableColumn="email">
-                    Email <p-sortIcon field="email" />
+                <th pSortableColumn="email" style="min-width:14rem">
+                    Correo Electrónico <p-sortIcon field="email" />
                 </th>
-                <th style="min-width: 12rem"></th>
+                <th style="width: 180px" class="text-center">Acciones</th>
             </tr>
         </ng-template>
+
         <ng-template #body let-titular>
             <tr>
-                <td>{{ titular.nombres }}</td>
-                <td>{{ titular.apellidos }}</td>
-                <td>{{ titular.dni || '-' }}</td>
-                <td>{{ titular.telefono || '-' }}</td>
-                <td>{{ titular.email || '-' }}</td>
                 <td>
-                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="editTitular(titular)" *ngIf="authService.hasPermission('actualizar_titulares')" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                        (click)="deleteTitular(titular)" *ngIf="authService.hasPermission('eliminar_titulares')" />
+                    <div class="avatar-cell">
+                        <div class="avatar-circle">
+                            {{ getInitials(titular.nombres, titular.apellidos) }}
+                        </div>
+                        <div class="info">
+                            <span class="main-text">{{ titular.nombres }} {{ titular.apellidos }}</span>
+                            <span class="sub-text" *ngIf="titular.direccion">Dir: {{ titular.direccion | slice:0:30 }}{{ titular.direccion.length > 30 ? '...' : '' }}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="font-medium text-gray-700 tracking-tight">{{ titular.dni || '---' }}</span>
+                </td>
+                <td>
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <i class="pi pi-phone text-xs opacity-50"></i>
+                        <span>{{ titular.telefono || 'Sin tel.' }}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <i class="pi pi-envelope text-xs opacity-50"></i>
+                        <span class="text-sm">{{ titular.email || 'Sin correo' }}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="action-buttons justify-center">
+                        <p-button icon="pi pi-file-o" severity="info" [rounded]="true" [text]="true"
+                            (click)="viewEstadoCuenta(titular)" pTooltip="Ver Estado de Cuenta" />
+                        
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                            (click)="editTitular(titular)" *ngIf="authService.hasPermission('actualizar_titulares')" 
+                            pTooltip="Editar perfil" />
+                        
+                        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                            (click)="deleteTitular(titular)" *ngIf="authService.hasPermission('eliminar_titulares')" 
+                            pTooltip="Eliminar permanentemente" />
+                    </div>
                 </td>
             </tr>
         </ng-template>
         <ng-template #emptymessage>
             <tr>
-                <td colspan="6" class="text-center">No se encontraron titulares.</td>
+                <td colspan="5" class="text-center py-8">
+                    <i class="pi pi-users text-3xl text-gray-300 block mb-3"></i>
+                    <span class="text-gray-500">No se encontraron titulares registrados.</span>
+                </td>
             </tr>
         </ng-template>
     </p-table>
 
-    <p-dialog [(visible)]="titularDialog" [style]="{ width: '450px' }" header="Detalles del Titular" [modal]="true"
+    <p-dialog [(visible)]="titularDialog" [style]="{ width: '450px', maxWidth: '95vw' }" header="Detalles del Titular" [modal]="true"
         class="p-fluid">
         <ng-template #content>
             <div class="flex flex-col gap-6">
@@ -122,5 +165,69 @@
         </ng-template>
     </p-dialog>
 
-    <p-confirmDialog [style]="{ width: '450px' }" />
+    <p-confirmDialog [style]="{ width: '450px', maxWidth: '95vw' }" />
+
+    <!-- ESTADO DE CUENTA DIALOG -->
+    <p-dialog [(visible)]="estadoCuentaDialog" [style]="{ width: '800px', maxWidth: '95vw' }" header="Estado de Cuenta" [modal]="true" class="p-fluid">
+        <ng-template #content>
+            <div *ngIf="selectedTitular" class="flex flex-col gap-4">
+                <div class="summary-card p-4 surface-100 border-round">
+                    <h3 class="mt-0 mb-2">{{ selectedTitular.nombres }} {{ selectedTitular.apellidos }}</h3>
+                    <p class="m-0 text-secondary"><strong>DNI:</strong> {{ selectedTitular.dni || 'N/A' }} | <strong>Teléfono:</strong> {{ selectedTitular.telefono || 'N/A' }}</p>
+                </div>
+
+                <h4>Inhumaciones a cargo</h4>
+                <p-table [value]="selectedTitular.inhumaciones || []" [rows]="5" [paginator]="true" [tableStyle]="{ 'min-width': '100%' }">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Difunto</th>
+                            <th>Espacio</th>
+                            <th>Fecha Inh.</th>
+                            <th>Estado</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-inh>
+                        <tr>
+                            <td>{{ inh.difunto?.nombres }} {{ inh.difunto?.apellidos }}</td>
+                            <td>{{ inh.espacio?.codigo || (inh.espacio?.fila ? inh.espacio?.fila + '-' + inh.espacio?.columna : 'N/A') }}</td>
+                            <td>{{ inh.fechaInhumacion | date:'mediumDate' }}</td>
+                            <td><p-tag [value]="inh.estado" [severity]="inh.estado === 'ACTIVO' ? 'success' : 'warn'" /></td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr><td colspan="4" class="text-center">No tiene inhumaciones a cargo.</td></tr>
+                    </ng-template>
+                </p-table>
+
+                <h4 class="mt-4">Historial de Pagos</h4>
+                <p-table [value]="selectedTitular.pagos || []" [rows]="5" [paginator]="true" [tableStyle]="{ 'min-width': '100%' }">
+                    <ng-template pTemplate="header">
+                        <tr>
+                            <th>Recibo</th>
+                            <th>Concepto</th>
+                            <th>Monto</th>
+                            <th>Fecha</th>
+                            <th>Estado</th>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="body" let-pago>
+                        <tr>
+                            <td>{{ pago.codigoRecibo }}</td>
+                            <td>{{ pago.detalles && pago.detalles.length > 0 ? pago.detalles[0].concepto?.nombre : 'Varios' }}</td>
+                            <td>S/ {{ pago.montoTotal | number:'1.2-2' }}</td>
+                            <td>{{ pago.fechaPago | date:'shortDate' }}</td>
+                            <td><p-tag [value]="pago.estado" [severity]="pago.estado === 'PAGADO' ? 'success' : 'danger'" /></td>
+                        </tr>
+                    </ng-template>
+                    <ng-template pTemplate="emptymessage">
+                        <tr><td colspan="5" class="text-center">No registra pagos.</td></tr>
+                    </ng-template>
+                </p-table>
+            </div>
+        </ng-template>
+        <ng-template #footer>
+            <p-button label="Cerrar" icon="pi pi-times" severity="secondary" text (click)="hideDialog()" />
+            <p-button label="Imprimir PDF" icon="pi pi-print" (click)="printEstadoCuenta()" />
+        </ng-template>
+    </p-dialog>
 </div>

@@ -40,7 +40,14 @@ export class TitularesService {
     async findOne(id: number): Promise<Titular> {
         const titular = await this.titularesRepository.findOne({
             where: { id },
-            relations: ['inhumaciones', 'pagos'],
+            relations: [
+                'inhumaciones', 
+                'inhumaciones.espacio', 
+                'inhumaciones.difunto', 
+                'pagos', 
+                'pagos.detalles', 
+                'pagos.detalles.concepto'
+            ],
         });
 
         if (!titular) {

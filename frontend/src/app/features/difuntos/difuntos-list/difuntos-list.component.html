@@ -13,54 +13,97 @@
     </p-toolbar>
 
     <p-table #dt [value]="difuntos" [rows]="10" [paginator]="true"
-        [globalFilterFields]="['nombres', 'apellidos', 'dni']" [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true"
-        dataKey="id" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} difuntos"
-        [showCurrentPageReport]="true">
+        [globalFilterFields]="['nombres', 'apellidos', 'dni']" 
+        [tableStyle]="{ 'min-width': '75rem' }" 
+        [rowHover]="true"
+        dataKey="id" 
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} difuntos"
+        [showCurrentPageReport]="true"
+        styleClass="p-datatable-modern">
+        
         <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Gestión de Difuntos</h5>
-                <p-iconfield>
+            <div class="flex items-center justify-between pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-primary-100 rounded-xl">
+                        <i class="pi pi-users text-primary-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 text-xl font-bold tracking-tight">Gestión de Difuntos</h5>
+                        <p class="text-sm text-gray-500 m-0">Administración de registros de fallecidos</p>
+                    </div>
+                </div>
+                <p-iconfield styleClass="w-80">
                     <p-inputicon styleClass="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por nombre, apellido o DNI..." class="w-full rounded-xl border-gray-200" />
                 </p-iconfield>
             </div>
         </ng-template>
+
         <ng-template #header>
             <tr>
-                <th pSortableColumn="nombres" style="min-width:14rem">
-                    Nombres <p-sortIcon field="nombres" />
+                <th pSortableColumn="nombres" style="min-width:18rem">
+                    Difunto <p-sortIcon field="nombres" />
                 </th>
-                <th pSortableColumn="apellidos" style="min-width:14rem">
-                    Apellidos <p-sortIcon field="apellidos" />
-                </th>
-                <th pSortableColumn="dni">
+                <th pSortableColumn="dni" style="width: 150px">
                     DNI <p-sortIcon field="dni" />
                 </th>
-                <th pSortableColumn="sexo">
+                <th pSortableColumn="sexo" style="width: 120px">
                     Sexo <p-sortIcon field="sexo" />
                 </th>
-                <th pSortableColumn="fechaDefuncion">
+                <th pSortableColumn="fechaDefuncion" style="width: 180px">
                     F. Defunción <p-sortIcon field="fechaDefuncion" />
                 </th>
-                <th pSortableColumn="titular.nombres">
-                    Titular <p-sortIcon field="titular.nombres" />
+                <th pSortableColumn="titular.nombres" style="min-width:14rem">
+                    Titular Responsable <p-sortIcon field="titular.nombres" />
                 </th>
-                <th style="min-width: 12rem"></th>
+                <th style="width: 120px" class="text-center">Acciones</th>
             </tr>
         </ng-template>
+
         <ng-template #body let-difunto>
             <tr>
-                <td>{{ difunto.nombres }}</td>
-                <td>{{ difunto.apellidos }}</td>
-                <td>{{ difunto.dni || '-' }}</td>
-                <td>{{ difunto.sexo === 'M' ? 'Masculino' : 'Femenino' }}</td>
-                <td>{{ difunto.fechaDefuncion | date:'dd/MM/yyyy' }}</td>
-                <td>{{ difunto.titular ? difunto.titular.nombres + ' ' + difunto.titular.apellidos : '-' }}</td>
                 <td>
-                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="editDifunto(difunto)" *ngIf="authService.hasPermission('actualizar_difuntos')" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                        (click)="deleteDifunto(difunto)" *ngIf="authService.hasPermission('eliminar_difuntos')" />
+                    <div class="avatar-cell">
+                        <div class="avatar-circle">
+                            {{ getInitials(difunto.nombres, difunto.apellidos) }}
+                        </div>
+                        <div class="info">
+                            <span class="main-text">{{ difunto.nombres }} {{ difunto.apellidos }}</span>
+                            <span class="sub-text" *ngIf="difunto.fechaNacimiento">Nac: {{ difunto.fechaNacimiento | date:'dd/MM/yyyy' }}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <span class="font-medium text-gray-700">{{ difunto.dni || '-' }}</span>
+                </td>
+                <td>
+                    <div class="flex items-center gap-2">
+                        <i class="pi" [ngClass]="difunto.sexo === 'M' ? 'pi-mars text-blue-500' : 'pi-venus text-pink-500'"></i>
+                        <span>{{ difunto.sexo === 'M' ? 'Masc.' : 'Fem.' }}</span>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <i class="pi pi-calendar text-sm opacity-50"></i>
+                        {{ difunto.fechaDefuncion | date:'dd/MM/yyyy' }}
+                    </div>
+                </td>
+                <td>
+                    <div class="inline-flex items-center gap-2 px-3 py-1 bg-gray-50 rounded-lg border border-gray-100" *ngIf="difunto.titular">
+                        <i class="pi pi-user-edit text-xs text-gray-400"></i>
+                        <span class="text-sm font-medium text-gray-700">{{ difunto.titular.nombres }} {{ difunto.titular.apellidos }}</span>
+                    </div>
+                    <span *ngIf="!difunto.titular" class="text-gray-400 italic text-sm">Sin asignar</span>
+                </td>
+                <td>
+                    <div class="action-buttons justify-center">
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                            (click)="editDifunto(difunto)" *ngIf="authService.hasPermission('actualizar_difuntos')" 
+                            pTooltip="Editar registro" />
+                        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                            (click)="deleteDifunto(difunto)" *ngIf="authService.hasPermission('eliminar_difuntos')" 
+                            pTooltip="Eliminar permanentemente" />
+                    </div>
                 </td>
             </tr>
         </ng-template>
@@ -71,7 +114,7 @@
         </ng-template>
     </p-table>
 
-    <p-dialog [(visible)]="difuntoDialog" [style]="{ width: '600px' }" header="Registro de Difunto"
+    <p-dialog [(visible)]="difuntoDialog" [style]="{ width: '600px', maxWidth: '95vw' }" header="Registro de Difunto"
         [modal]="true" class="p-fluid">
         <ng-template #content>
             <div class="flex flex-col gap-6">
@@ -144,9 +187,21 @@
                         <!-- Titular Responsable -->
                         <div>
                             <label for="titularId" class="block font-bold mb-2">Titular Responsable</label>
-                            <p-select id="titularId" [(ngModel)]="difunto.titularId"
-                                [options]="titulares" optionLabel="label" optionValue="value"
-                                placeholder="Seleccione Titular" [filter]="true" appendTo="body" fluid />
+                            <p-select id="titularId" [(ngModel)]="difunto.titularId" [options]="titulares"
+                                optionLabel="label" optionValue="value" placeholder="Seleccione Titular" [filter]="true"
+                                appendTo="body" fluid panelStyleClass="titular-select-panel">
+                                <ng-template #item let-titular>
+                                    <div class="titular-item-dropdown">
+                                        <div class="avatar-circle">
+                                            <i class="pi pi-user"></i>
+                                        </div>
+                                        <div class="titular-text">
+                                            <span class="name">{{ titular.nombres }} {{ titular.apellidos }}</span>
+                                            <span class="dni">{{ titular.dni }}</span>
+                                        </div>
+                                    </div>
+                                </ng-template>
+                            </p-select>
                         </div>
 
                         <!-- Observaciones Difunto -->
@@ -165,5 +220,5 @@
         </ng-template>
     </p-dialog>
 
-    <p-confirmDialog [style]="{ width: '450px' }" />
+    <p-confirmDialog [style]="{ width: '450px', maxWidth: '95vw' }" />
 </div>

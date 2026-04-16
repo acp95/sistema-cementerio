@@ -14,6 +14,7 @@ import { EspaciosService } from './espacios.service';
 import { CreateEspacioDto } from './dto/create-espacio.dto';
 import { UpdateEspacioDto } from './dto/update-espacio.dto';
 import { FilterEspaciosDto } from './dto/filter-espacios.dto';
+import { ReservarEspacioDto } from './dto/reservar-espacio.dto';
 import { EstadoEspacio } from './entities/espacio.entity';
 
 @ApiTags('espacios')
@@ -92,6 +93,18 @@ export class EspaciosController {
         @Param('nuevoEstado') nuevoEstado: EstadoEspacio,
     ) {
         return this.espaciosService.cambiarEstado(id, nuevoEstado);
+    }
+
+    @Post(':id/reservar')
+    @ApiOperation({ summary: 'Reservar un espacio para un titular' })
+    @ApiParam({ name: 'id', description: 'ID del espacio' })
+    @ApiResponse({ status: 200, description: 'Reserva realizada exitosamente' })
+    @ApiResponse({ status: 400, description: 'El espacio no está disponible para reserva' })
+    reservar(
+        @Param('id', ParseIntPipe) id: number,
+        @Body() reservarDto: ReservarEspacioDto,
+    ) {
+        return this.espaciosService.reservar(id, reservarDto.titularId);
     }
 
     @Delete(':id')

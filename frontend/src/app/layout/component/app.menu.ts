@@ -36,8 +36,8 @@ export class AppMenu implements OnInit {
             {
                 label: 'Gestión de Cementerio',
                 items: [
-                    { label: 'Sectores', icon: 'pi pi-fw pi-map', routerLink: ['/sectores'], permission: 'ver_sectores' },
-                    { label: 'Espacios', icon: 'pi pi-fw pi-th-large', routerLink: ['/espacios'], permission: 'ver_espacios' },
+                    { label: 'Mapa Interactivo', icon: 'pi pi-fw pi-map', routerLink: ['/sectores'], permission: 'ver_sectores' },
+                    { label: 'Lista de Espacios', icon: 'pi pi-fw pi-list', routerLink: ['/espacios'], permission: 'ver_espacios' },
                     { label: 'Difuntos', icon: 'pi pi-fw pi-users', routerLink: ['/difuntos'], permission: 'ver_difuntos' },
                     { label: 'Titulares', icon: 'pi pi-fw pi-id-card', routerLink: ['/titulares'], permission: 'ver_titulares' },
                     { label: 'Inhumaciones', icon: 'pi pi-fw pi-box', routerLink: ['/inhumaciones'], permission: 'ver_inhumaciones' },
@@ -50,7 +50,8 @@ export class AppMenu implements OnInit {
                 items: [
                     { label: 'Roles', icon: 'pi pi-fw pi-lock', routerLink: ['/roles'], permission: 'ver_roles' },
                     { label: 'Usuarios', icon: 'pi pi-fw pi-user', routerLink: ['/usuarios'], permission: 'ver_usuarios' },
-                    { label: 'Permisos', icon: 'pi pi-fw pi-key', routerLink: ['/permisos'], permission: 'ver_permisos' }
+                    { label: 'Permisos', icon: 'pi pi-fw pi-key', routerLink: ['/permisos'], permission: 'ver_permisos' },
+                    { label: 'Respaldos', icon: 'pi pi-fw pi-database', routerLink: ['/respaldos'], permission: 'ver_respaldos' }
                 ]
             }
         ];

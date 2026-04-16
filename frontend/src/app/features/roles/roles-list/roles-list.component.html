@@ -13,58 +13,92 @@
     </p-toolbar>
 
     <p-table #dt [value]="roles" [rows]="10" [paginator]="true" [globalFilterFields]="['nombre', 'descripcion']"
-        [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} roles" [showCurrentPageReport]="true">
+        [tableStyle]="{ 'min-width': '75rem' }" 
+        [rowHover]="true" 
+        dataKey="id"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} roles de sistema" 
+        [showCurrentPageReport]="true"
+        styleClass="p-datatable-modern">
+        
         <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Gestión de Roles</h5>
-                <p-iconfield>
+            <div class="flex items-center justify-between pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-red-100 rounded-xl">
+                        <i class="pi pi-shield text-red-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 text-xl font-bold tracking-tight">Roles y Seguridad</h5>
+                        <p class="text-sm text-gray-500 m-0">Niveles de acceso y permisos del sistema</p>
+                    </div>
+                </div>
+                <p-iconfield styleClass="w-80">
                     <p-inputicon styleClass="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar roles..." class="w-full rounded-xl border-gray-200" />
                 </p-iconfield>
             </div>
         </ng-template>
+
         <ng-template #header>
             <tr>
-                <th pSortableColumn="nombre" style="min-width:14rem">
-                    Nombre <p-sortIcon field="nombre" />
+                <th pSortableColumn="nombre" style="min-width:18rem">
+                    Nombre del Rol <p-sortIcon field="nombre" />
                 </th>
-                <th pSortableColumn="descripcion">
-                    Descripción <p-sortIcon field="descripcion" />
+                <th pSortableColumn="descripcion" style="min-width:25rem">
+                    Descripción / Funciones <p-sortIcon field="descripcion" />
                 </th>
-                <th pSortableColumn="activo">
+                <th pSortableColumn="activo" style="width: 130px">
                     Estado <p-sortIcon field="activo" />
                 </th>
-                <th style="min-width: 12rem"></th>
+                <th style="width: 200px" class="text-center">Acciones</th>
             </tr>
         </ng-template>
+
         <ng-template #body let-rol>
-            <tr>
-                <td>{{ rol.nombre }}</td>
-                <td>{{ rol.descripcion || '-' }}</td>
+            <tr [ngClass]="{'opacity-60 bg-gray-50': !rol.activo}">
                 <td>
-                    <p-tag [value]="rol.activo ? 'ACTIVO' : 'INACTIVO'"
-                        [severity]="rol.activo ? 'success' : 'danger'" />
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-gray-100 rounded-lg">
+                            <i class="pi pi-briefcase text-gray-500"></i>
+                        </div>
+                        <span class="font-bold text-gray-800 tracking-tight text-lg">{{ rol.nombre }}</span>
+                    </div>
                 </td>
                 <td>
-                    <p-button icon="pi pi-key" class="mr-2" [rounded]="true" [outlined]="true" severity="info"
-                        pTooltip="Permisos" (click)="openPermissionsDialog(rol)"
-                        *ngIf="authService.hasPermission('actualizar_roles')" />
-                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true" (click)="editRol(rol)"
-                        *ngIf="authService.hasPermission('actualizar_roles')" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                        (click)="deleteRol(rol)" *ngIf="authService.hasPermission('eliminar_roles')" />
+                    <span class="text-sm text-gray-600 leading-relaxed">{{ rol.descripcion || 'Sin descripción detallada' }}</span>
+                </td>
+                <td>
+                    <span class="status-badge" [ngClass]="rol.activo ? 'status-active' : 'status-annulled'">
+                        {{ rol.activo ? 'ACTIVO' : 'INACTIVO' }}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons justify-center">
+                        <p-button icon="pi pi-key" [rounded]="true" [text]="true" severity="info"
+                            pTooltip="Configurar Permisos" (click)="openPermissionsDialog(rol)"
+                            *ngIf="authService.hasPermission('actualizar_roles')" />
+                        
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                             (click)="editRol(rol)" pTooltip="Editar información"
+                            *ngIf="authService.hasPermission('actualizar_roles')" />
+                        
+                        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                            (click)="deleteRol(rol)" *ngIf="authService.hasPermission('eliminar_roles')" 
+                            pTooltip="Eliminar permanentemente" />
+                    </div>
                 </td>
             </tr>
         </ng-template>
         <ng-template #emptymessage>
             <tr>
-                <td colspan="4" class="text-center">No se encontraron roles.</td>
+                <td colspan="4" class="text-center py-8">
+                    <i class="pi pi-lock-open text-3xl text-gray-300 block mb-3"></i>
+                    <span class="text-gray-500">No se encontraron roles definidos.</span>
+                </td>
             </tr>
         </ng-template>
     </p-table>
 
-    <p-dialog [(visible)]="rolDialog" [style]="{ width: '450px' }" header="Detalles del Rol" [modal]="true"
+    <p-dialog [(visible)]="rolDialog" [style]="{ width: '450px', maxWidth: '95vw' }" header="Detalles del Rol" [modal]="true"
         class="p-fluid">
         <ng-template #content>
             <div class="flex flex-col gap-6">
@@ -93,7 +127,7 @@
         </ng-template>
     </p-dialog>
 
-    <p-confirmDialog [style]="{ width: '450px' }" />
+    <p-confirmDialog [style]="{ width: '450px', maxWidth: '95vw' }" />
 
     <!-- Matrix Permissions Dialog -->
     <app-role-permissions-dialog [(visible)]="permissionsDialogVisible" [rol]="selectedRolForPermissions"

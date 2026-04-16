@@ -85,4 +85,15 @@ export class InhumacionesController {
     anular(@Param('id', ParseIntPipe) id: number) {
         return this.inhumacionesService.anular(id);
     }
+
+    @Patch(':id/revertir-anulacion')
+    @ApiOperation({ summary: 'Revertir la anulación de una inhumación (re-ocupa el espacio)' })
+    @ApiParam({ name: 'id', description: 'ID de la inhumación' })
+    @ApiResponse({ status: 200, description: 'Anulación revertida' })
+    @ApiResponse({ status: 404, description: 'Inhumación no encontrada' })
+    @ApiResponse({ status: 409, description: 'El espacio ya está ocupado' })
+    revertirAnulacion(@Param('id', ParseIntPipe) id: number) {
+        return this.inhumacionesService.revertirAnulacion(id);
+    }
 }
+

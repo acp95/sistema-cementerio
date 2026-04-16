@@ -97,4 +97,12 @@ export class CreateEspacioDto {
     @IsNumber()
     @IsOptional()
     coordenadasLng?: number;
+
+    @ApiProperty({
+        description: 'ID del titular responsable',
+        required: false,
+    })
+    @IsInt()
+    @IsOptional()
+    titularId?: number;
 }

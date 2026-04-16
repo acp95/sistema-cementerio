@@ -7,6 +7,7 @@ export interface Sector {
     tipoEspacio: 'nicho' | 'fosa';
     capacidadTotal: number;
     coordenadasGeo?: string;
+    espacios?: Espacio[];
     createdAt: Date;
     updatedAt: Date;
 }
@@ -33,7 +34,7 @@ export interface Espacio {
     numero?: string;
     tipo: 'nicho' | 'fosa';
     ubicacion: string;
-    estado: 'LIBRE' | 'OCUPADO' | 'MANTENIMIENTO';
+    estado: 'LIBRE' | 'OCUPADO' | 'MANTENIMIENTO' | 'RESERVADO';
     precioAnual: number;
     createdAt: Date;
     updatedAt: Date;
@@ -70,6 +71,6 @@ export interface EspacioMapa {
     ocupante: {
         difunto: string;
         titular: string;
-        fechaInhumacion: Date;
+        fechaInhumacion: Date | null | string;
     } | null;
 }

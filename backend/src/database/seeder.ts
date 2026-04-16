@@ -169,6 +169,8 @@ export class DatabaseSeeder {
 
         // Lista completa de permisos del sistema
         const permisosData = [
+            // Dashboard
+            { slug: 'ver_dashboard', descripcion: 'Ver panel de control' },
             // Difuntos
             { slug: 'ver_difuntos', descripcion: 'Ver listado de difuntos' },
             { slug: 'crear_difuntos', descripcion: 'Crear nuevos difuntos' },
@@ -180,6 +182,12 @@ export class DatabaseSeeder {
             { slug: 'actualizar_inhumaciones', descripcion: 'Actualizar inhumaciones' },
             { slug: 'eliminar_inhumaciones', descripcion: 'Eliminar inhumaciones' },
             { slug: 'anular_inhumaciones', descripcion: 'Anular inhumaciones (libera el espacio)' },
+            { slug: 'revertir_anulacion_inhumaciones', descripcion: 'Revertir la anulación de una inhumación' },
+            // Titulares
+            { slug: 'ver_titulares', descripcion: 'Ver listado de titulares' },
+            { slug: 'crear_titulares', descripcion: 'Crear nuevos titulares' },
+            { slug: 'actualizar_titulares', descripcion: 'Actualizar titulares' },
+            { slug: 'eliminar_titulares', descripcion: 'Eliminar titulares' },
             // Sectores
             { slug: 'ver_sectores', descripcion: 'Ver listado de sectores' },
             { slug: 'crear_sectores', descripcion: 'Crear nuevos sectores' },
@@ -202,6 +210,7 @@ export class DatabaseSeeder {
             { slug: 'eliminar_pagos', descripcion: 'Eliminar pagos' },
             { slug: 'anular_pagos', descripcion: 'Anular pagos registrados' },
             { slug: 'revertir_anulacion_pagos', descripcion: 'Revertir la anulación de un pago' },
+            { slug: 'registrar_cobro', descripcion: 'Registrar el cobro efectivo de un pago pendiente' },
             // Usuarios
             { slug: 'ver_usuarios', descripcion: 'Ver listado de usuarios' },
             { slug: 'crear_usuarios', descripcion: 'Crear nuevos usuarios' },
@@ -212,6 +221,14 @@ export class DatabaseSeeder {
             { slug: 'crear_roles', descripcion: 'Crear nuevos roles' },
             { slug: 'actualizar_roles', descripcion: 'Actualizar roles' },
             { slug: 'eliminar_roles', descripcion: 'Eliminar roles' },
+            // Permisos
+            { slug: 'ver_permisos', descripcion: 'Ver listado de permisos' },
+            { slug: 'crear_permisos', descripcion: 'Crear nuevos permisos' },
+            { slug: 'actualizar_permisos', descripcion: 'Actualizar permisos' },
+            { slug: 'eliminar_permisos', descripcion: 'Eliminar permisos' },
+            // Respaldos
+            { slug: 'ver_respaldos', descripcion: 'Ver el módulo de copias de seguridad' },
+            { slug: 'crear_respaldos', descripcion: 'Generar y descargar copias de seguridad del sistema' },
         ];
 
         let createdCount = 0;

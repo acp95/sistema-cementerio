@@ -3,29 +3,445 @@
 @use 'assets/layout/layout.scss';
 @use 'assets/demo/demo.scss';
 
-/* Estilos globales para tablas más compactas */
+/* ==========================================================================
+   PREMIUM TABLE DESIGN SYSTEM
+   ========================================================================== */
+
 .p-datatable {
-    .p-datatable-thead > tr > th {
-        padding: 0.5rem 0.75rem !important;
-    }
-    
-    .p-datatable-tbody > tr > td {
-        padding: 0.4rem 0.75rem !important;
-    }
-    
-    .p-datatable-tfoot > tr > td {
-        padding: 0.5rem 0.75rem !important;
+    &.p-datatable-modern {
+        .p-datatable-header {
+            background: transparent;
+            border: none;
+            padding: 1.5rem 0;
+            
+            h5 {
+                font-weight: 700;
+                font-size: 1.5rem;
+                color: var(--text-color);
+                letter-spacing: -0.02em;
+            }
+        }
+
+        .p-datatable-thead > tr > th {
+            background: var(--surface-100);
+            color: var(--text-color-secondary);
+            font-weight: 600;
+            font-size: 0.875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 1rem 1.25rem;
+            border: none;
+            border-bottom: 2px solid var(--surface-200);
+            transition: background-color 0.2s;
+
+            &:first-child { border-top-left-radius: 12px; }
+            &:last-child { border-top-right-radius: 12px; }
+
+            .p-column-title {
+                opacity: 0.8;
+            }
+
+            &:hover {
+                background: var(--surface-200);
+            }
+        }
+
+        .p-datatable-tbody > tr {
+            background: var(--surface-card);
+            transition: all 0.2s ease;
+
+            &:hover {
+                background: var(--surface-50) !important;
+                transform: translateY(-1px);
+                box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            }
+
+            > td {
+                padding: 1rem 1.25rem;
+                border: none;
+                border-bottom: 1px solid var(--surface-100);
+                vertical-align: middle;
+            }
+
+            &:last-child > td {
+                &:first-child { border-bottom-left-radius: 12px; }
+                &:last-child { border-bottom-right-radius: 12px; }
+            }
+        }
+
+        /* Sorting icons refinement */
+        .p-sortable-column .p-sortable-column-icon {
+            color: var(--primary-color);
+            margin-left: 0.5rem;
+            font-size: 0.75rem;
+            opacity: 0.5;
+        }
+
+        .p-sortable-column.p-highlight .p-sortable-column-icon {
+            opacity: 1;
+        }
     }
 }
 
-/* Botones de acción en tablas más compactos */
-.p-datatable .p-button.p-button-icon-only {
-    width: 2rem;
-    height: 2rem;
-    padding: 0.25rem;
+/* Custom UI Elements for Tables */
+.avatar-cell {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+
+    .avatar-circle {
+        width: 40px;
+        height: 40px;
+        border-radius: 50%;
+        background: var(--primary-100);
+        color: var(--primary-700);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-weight: 700;
+        font-size: 0.9rem;
+        flex-shrink: 0;
+        border: 2px solid white;
+        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+
+    .info {
+        display: flex;
+        flex-direction: column;
+        
+        .main-text {
+            font-weight: 600;
+            color: var(--text-color);
+            margin-bottom: 0.15rem;
+        }
+        
+        .sub-text {
+            font-size: 0.75rem;
+            color: var(--text-color-secondary);
+        }
+    }
 }
 
-/* Header de tabla más compacto */
-.p-datatable .p-datatable-header {
-    padding: 0.75rem;
+/* Premium Tags */
+.status-badge {
+    padding: 0.35rem 0.75rem;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 700;
+    text-transform: uppercase;
+    letter-spacing: 0.03em;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.4rem;
+    
+    i { font-size: 0.7rem; }
+
+    &.status-active { background: rgba(34, 197, 94, 0.15); color: #15803d; }
+    &.status-annulled { background: rgba(239, 68, 68, 0.15); color: #b91c1c; }
+    &.status-pending { background: rgba(245, 158, 11, 0.15); color: #b45309; }
+    &.status-paid { background: rgba(30, 64, 175, 0.15); color: #1e40af; }
 }
+
+/* Action Buttons clean style */
+.action-buttons {
+    display: flex;
+    gap: 0.5rem;
+    
+    .p-button.p-button-icon-only {
+        width: 2.2rem;
+        height: 2.2rem;
+        border-radius: 10px;
+        transition: transform 0.2s;
+        
+        &:hover { transform: scale(1.1); }
+    }
+}
+
+/* ==========================================================================
+   RESPONSIVE DESIGN SYSTEM — Mobile & Tablet Adaptations
+   ========================================================================== */
+
+/* ---- TABLET (max 1024px) ---- */
+@media screen and (max-width: 1024px) {
+    /* Tables: remove fixed min-width, allow horizontal scroll */
+    .p-datatable {
+        .p-datatable-table {
+            min-width: 100% !important;
+        }
+        .p-datatable-wrapper {
+            overflow-x: auto;
+            -webkit-overflow-scrolling: touch;
+        }
+    }
+
+    /* Dashboard charts grid */
+    .charts-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* Dialogs: fit on tablet */
+    .p-dialog {
+        width: 90vw !important;
+        max-width: 90vw !important;
+    }
+}
+
+/* ---- MOBILE (max 768px) ---- */
+@media screen and (max-width: 768px) {
+    /* --- Layout padding reduction --- */
+    .layout-main-container {
+        padding-left: 1rem !important;
+        padding-right: 1rem !important;
+    }
+
+    .card {
+        padding: 0.75rem !important;
+    }
+
+    /* --- Toolbar: stack vertically --- */
+    .p-toolbar {
+        flex-wrap: wrap;
+        gap: 0.75rem;
+
+        .p-toolbar-start,
+        .p-toolbar-end {
+            width: 100%;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 0.5rem;
+        }
+
+        .p-toolbar-end {
+            justify-content: flex-start;
+        }
+
+        .p-button {
+            flex: 1 1 auto;
+            min-width: 0;
+            justify-content: center;
+        }
+    }
+
+    /* --- Table Caption: stack title + search --- */
+    .p-datatable-header {
+        .flex.items-center.justify-between {
+            flex-direction: column !important;
+            align-items: stretch !important;
+            gap: 1rem;
+        }
+    }
+
+    /* Search bar: full width */
+    .p-iconfield {
+        width: 100% !important;
+    }
+
+    /* --- Table header text: smaller --- */
+    .p-datatable.p-datatable-modern {
+        .p-datatable-thead > tr > th {
+            padding: 0.65rem 0.5rem;
+            font-size: 0.7rem;
+            letter-spacing: 0.02em;
+        }
+
+        .p-datatable-tbody > tr > td {
+            padding: 0.6rem 0.5rem;
+            font-size: 0.85rem;
+        }
+    }
+
+    /* --- Action Buttons: wrap + touch targets --- */
+    .action-buttons {
+        flex-wrap: wrap;
+        gap: 0.35rem;
+        justify-content: center;
+
+        .p-button.p-button-icon-only {
+            width: 2.5rem;
+            height: 2.5rem;
+            min-width: 2.5rem;
+        }
+    }
+
+    /* --- Avatar cells: compact --- */
+    .avatar-cell {
+        gap: 0.5rem;
+
+        .avatar-circle {
+            width: 32px;
+            height: 32px;
+            font-size: 0.75rem;
+        }
+
+        .info .sub-text {
+            display: none;
+        }
+    }
+
+    /* --- Status badges: compact --- */
+    .status-badge {
+        padding: 0.25rem 0.5rem;
+        font-size: 0.65rem;
+        gap: 0.25rem;
+        white-space: nowrap;
+
+        i { font-size: 0.6rem; }
+    }
+
+    /* --- Form grids: single column --- */
+    .grid.grid-cols-2 {
+        grid-template-columns: 1fr !important;
+    }
+
+    /* --- Dialogs: full-width on mobile --- */
+    .p-dialog {
+        width: 95vw !important;
+        max-width: 95vw !important;
+        margin: 0.5rem !important;
+    }
+
+    .p-dialog .p-dialog-content {
+        padding: 1rem !important;
+    }
+
+    /* --- Confirm Dialog --- */
+    .p-confirmdialog {
+        width: 92vw !important;
+        max-width: 92vw !important;
+    }
+
+    /* --- Dashboard specific --- */
+    .charts-grid {
+        grid-template-columns: 1fr !important;
+        gap: 1rem !important;
+    }
+
+    .content-grid {
+        grid-template-columns: 1fr !important;
+    }
+
+    .actions-grid {
+        grid-template-columns: 1fr !important;
+        padding: 0.75rem !important;
+    }
+
+    /* --- Permissions matrix: scrollable --- */
+    .permissions-matrix {
+        overflow-x: auto;
+        -webkit-overflow-scrolling: touch;
+        margin: 0 -0.5rem;
+        padding: 0 0.5rem;
+
+        &::after {
+            content: '← Desliza para ver más →';
+            display: block;
+            text-align: center;
+            font-size: 0.7rem;
+            color: var(--text-color-secondary);
+            padding: 0.5rem 0;
+            opacity: 0.7;
+        }
+
+        .p-datatable-table {
+            min-width: 700px;
+        }
+    }
+}
+
+/* ---- SMALL MOBILE (max 480px) ---- */
+@media screen and (max-width: 480px) {
+    /* Even tighter padding */
+    .layout-main-container {
+        padding-left: 0.5rem !important;
+        padding-right: 0.5rem !important;
+    }
+
+    .card {
+        padding: 0.5rem !important;
+        border-radius: 8px;
+    }
+
+    /* Toolbar: fully stacked */
+    .p-toolbar {
+        padding: 0.5rem !important;
+
+        .p-button .p-button-label {
+            font-size: 0.8rem;
+        }
+    }
+
+    /* Table header: hide non-essential columns via clip */
+    .p-datatable.p-datatable-modern {
+        .p-datatable-thead > tr > th {
+            font-size: 0.65rem;
+            padding: 0.5rem 0.35rem;
+        }
+
+        .p-datatable-tbody > tr > td {
+            padding: 0.5rem 0.35rem;
+            font-size: 0.8rem;
+        }
+    }
+
+    /* Avatar: even more compact */
+    .avatar-cell {
+        gap: 0.35rem;
+
+        .avatar-circle {
+            width: 28px;
+            height: 28px;
+            font-size: 0.65rem;
+            border-width: 1px;
+        }
+
+        .info .main-text {
+            font-size: 0.8rem;
+            max-width: 120px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+    }
+
+    /* Status badges: icon only on tiny screens */
+    .status-badge {
+        font-size: 0.6rem;
+        padding: 0.2rem 0.4rem;
+    }
+
+    /* Dialogs: near full screen */
+    .p-dialog {
+        width: 98vw !important;
+        max-width: 98vw !important;
+        margin: 0.25rem !important;
+        border-radius: 12px !important;
+    }
+
+    /* Charts: reduce height */
+    .chart-card {
+        .p-chart {
+            height: 200px !important;
+        }
+    }
+
+    /* Stats grid: 2 columns for cards */
+    .stats-grid {
+        grid-template-columns: repeat(2, 1fr) !important;
+        gap: 0.5rem !important;
+
+        .stat-card {
+            .stat-icon {
+                width: 50px;
+                font-size: 1.5rem;
+            }
+
+            .stat-value {
+                font-size: 1.25rem;
+            }
+
+            .stat-label {
+                font-size: 0.7rem;
+            }
+        }
+    }
+}

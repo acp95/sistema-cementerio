@@ -1,78 +1,83 @@
-<div class="card">
+<div class="sectores-container">
     <p-toast />
-    <p-toolbar styleClass="mb-6">
-        <ng-template #start>
-            <p-button label="Nuevo" icon="pi pi-plus" class="mr-2" (onClick)="openNew()"
-                *ngIf="authService.hasPermission('crear_sectores')" />
-        </ng-template>
 
-        <ng-template #end>
+    <div class="table-header">
+        <div class="header-info">
+            <h2>Mapa Interactivo del Cementerio</h2>
+            <p>Seleccione un sector para explorar el mapa de nichos y fosas.</p>
+        </div>
+        <div class="actions">
+            <p-button label="Nuevo Sector" icon="pi pi-plus" (onClick)="openNew()"
+                *ngIf="authService.hasPermission('crear_sectores')" class="mr-2" />
             <p-button label="Excel" icon="pi pi-file-excel" severity="success" class="mr-2" (onClick)="exportExcel()" />
-            <p-button label="PDF" icon="pi pi-file-pdf" severity="danger" class="mr-2" (onClick)="exportPdf()" />
-        </ng-template>
-    </p-toolbar>
+        </div>
+    </div>
 
-    <p-table #dt [value]="(sectores$ | async) || []" [rows]="10" [paginator]="true"
-        [globalFilterFields]="['nombre', 'descripcion', 'tipo']" [tableStyle]="{ 'min-width': '75rem' }"
-        [rowHover]="true" dataKey="id" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} sectores"
-        [showCurrentPageReport]="true">
-        <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Gestión de Sectores</h5>
-                <p-iconfield>
-                    <p-inputicon styleClass="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
-                </p-iconfield>
+    <!-- Gallery Grid -->
+    <div class="gallery-grid" *ngIf="(sectores$ | async) as sectoresList; else loading">
+        <div *ngFor="let sector of sectoresList" class="sector-card shadow-lg">
+            <!-- Header with Gradient based on type -->
+            <div class="card-header" [ngClass]="sector.tipoEspacio">
+                <i class="header-icon pi" [ngClass]="sector.tipoEspacio === 'nicho' ? 'pi-th-large' : 'pi-box'"></i>
+                <div class="sector-title">{{ sector.nombre }}</div>
             </div>
-        </ng-template>
-        <ng-template #header>
-            <tr>
-                <th pSortableColumn="nombre" style="min-width:16rem">
-                    Nombre
-                    <p-sortIcon field="nombre" />
-                </th>
-                <th>Descripción</th>
-                <th pSortableColumn="tipo">
-                    Tipo
-                    <p-sortIcon field="tipo" />
-                </th>
-                <th pSortableColumn="capacidadTotal">
-                    Capacidad
-                    <p-sortIcon field="capacidadTotal" />
-                </th>
-                <th style="min-width: 12rem"></th>
-            </tr>
-        </ng-template>
-        <ng-template #body let-sector>
-            <tr>
-                <td>{{ sector.nombre }}</td>
-                <td>{{ sector.descripcion }}</td>
-                <td>{{ sector.tipoEspacio }}</td>
-                <td>{{ sector.capacidadTotal }}</td>
-                <td>
-                    <p-button icon="pi pi-map" class="mr-2" [rounded]="true" [outlined]="true" severity="info"
-                        (click)="verMapa(sector)" pTooltip="Ver Mapa de Nichos" tooltipPosition="top" />
-                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="editSector(sector)" *ngIf="authService.hasPermission('actualizar_sectores')" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                        (click)="deleteSector(sector)" *ngIf="authService.hasPermission('eliminar_sectores')" />
-                </td>
-            </tr>
-        </ng-template>
-        <ng-template #emptymessage>
-            <tr>
-                <td colspan="5" class="text-center">No se encontraron sectores.</td>
-            </tr>
-        </ng-template>
-    </p-table>
 
-    <p-dialog [(visible)]="sectorDialog" [style]="{ width: '450px' }" header="Detalles del Sector" [modal]="true">
+            <!-- Content -->
+            <div class="card-content">
+                <span class="sector-type">{{ sector.tipoEspacio === 'nicho' ? 'Pabellón de Nichos' : 'Sector de Fosas' }}</span>
+                <p class="description">{{ sector.descripcion || 'Sin descripción detallada disponible.' }}</p>
+                
+                <div class="stats-info">
+                    <div class="stat-label">
+                        <span class="occupied-text">Ocupados: {{ sector.capacidadTotal - getLibresCount(sector) }}</span>
+                        <span class="free-text">Libres: {{ getLibresCount(sector) }}</span>
+                    </div>
+                    <div class="progress-container">
+                        <div class="progress-bar" 
+                            [style.width.%]="getOccupancyPercent(sector)"
+                            pTooltip="{{ getOccupancyPercent(sector) }}% ocupado"
+                            tooltipPosition="top">
+                        </div>
+                    </div>
+                    <div class="text-xs text-slate-400 mt-2 text-right">
+                        Capacidad Total: {{ sector.capacidadTotal }}
+                    </div>
+                </div>
+            </div>
+
+            <!-- Footer -->
+            <div class="card-footer">
+                <div class="admin-actions">
+                    <p-button icon="pi pi-pencil" [rounded]="true" [text]="true" severity="secondary"
+                        (click)="editSector(sector)" *ngIf="authService.hasPermission('actualizar_sectores')" 
+                        pTooltip="Editar Sector" />
+                    <p-button icon="pi pi-trash" [rounded]="true" [text]="true" severity="danger"
+                        (click)="deleteSector(sector)" *ngIf="authService.hasPermission('eliminar_sectores')" 
+                        pTooltip="Eliminar" />
+                </div>
+                <p-button label="Ver Mapa" icon="pi pi-map" severity="info" (onClick)="verMapa(sector)" />
+            </div>
+        </div>
+
+        <div *ngIf="sectoresList.length === 0" class="col-span-full text-center py-10">
+            <i class="pi pi-search text-4xl text-slate-300 mb-4 block"></i>
+            <p class="text-slate-500">No se encontraron sectores registrados.</p>
+        </div>
+    </div>
+
+    <ng-template #loading>
+        <div class="flex justify-center items-center py-20">
+            <p-progressSpinner />
+        </div>
+    </ng-template>
+
+    <!-- Modal for CRUD (kept largely same but updated labels if needed) -->
+    <p-dialog [(visible)]="sectorDialog" [style]="{ width: '450px', maxWidth: '95vw' }" header="Detalles del Sector" [modal]="true">
         <ng-template #content>
             <div class="flex flex-col gap-6">
                 <div>
-                    <label for="nombre" class="block font-bold mb-3">Nombre</label>
+                    <label for="nombre" class="block font-bold mb-3">Nombre del Sector</label>
                     <input type="text" pInputText id="nombre" [(ngModel)]="sector.nombre" required autofocus fluid />
-                    <small class="text-red-500" *ngIf="submitted && !sector.nombre">El nombre es requerido.</small>
                 </div>
                 <div>
                     <label for="descripcion" class="block font-bold mb-3">Descripción</label>
@@ -96,8 +101,9 @@
                 </div>
 
                 <div>
-                    <label for="capacidad" class="block font-bold mb-3">Capacidad Total</label>
-                    <p-inputnumber id="capacidad" [(ngModel)]="sector.capacidadTotal" fluid />
+                    <label for="capacidad" class="block font-bold mb-3">Capacidad Total de Espacios</label>
+                    <p-inputnumber id="capacidad" [(ngModel)]="sector.capacidadTotal" fluid [disabled]="!!sector.id" />
+                    <small *ngIf="sector.id" class="text-slate-500">La capacidad no se puede editar una vez creado el sector.</small>
                 </div>
             </div>
         </ng-template>
@@ -108,5 +114,5 @@
         </ng-template>
     </p-dialog>
 
-    <p-confirmDialog [style]="{ width: '450px' }" />
+    <p-confirmDialog [style]="{ width: '450px', maxWidth: '95vw' }" />
 </div>

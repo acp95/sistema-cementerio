@@ -70,6 +70,33 @@
         </p-card>
     </div>
 
+    <!-- Charts Section -->
+    <div class="charts-grid mt-4 mb-4">
+        <!-- Occupancy Chart -->
+        <p-card styleClass="chart-card">
+            <ng-template pTemplate="header">
+                <div class="card-header p-4 pb-0">
+                    <h3 class="m-0"><i class="pi pi-chart-pie mr-2"></i>Distribución de Espacios</h3>
+                </div>
+            </ng-template>
+            <div class="flex justify-content-center" style="height: 300px; padding: 1rem;">
+                <p-chart type="doughnut" [data]="occupancyChartData()" [options]="occupancyChartOptions()" width="100%" height="100%"></p-chart>
+            </div>
+        </p-card>
+
+        <!-- Revenue Chart -->
+        <p-card styleClass="chart-card">
+            <ng-template pTemplate="header">
+                <div class="card-header p-4 pb-0">
+                    <h3 class="m-0"><i class="pi pi-chart-line mr-2"></i>Ingresos Recientes (6 meses)</h3>
+                </div>
+            </ng-template>
+            <div style="height: 300px; padding: 1rem;">
+                <p-chart type="line" [data]="revenueChartData()" [options]="revenueChartOptions()" width="100%" height="100%"></p-chart>
+            </div>
+        </p-card>
+    </div>
+
     <!-- Quick Actions -->
     <div class="content-grid">
         <p-card class="quick-actions-card">
@@ -123,23 +150,48 @@
                 }
             </div>
             } @else if (recentPayments().length > 0) {
-            <p-table [value]="recentPayments()" [tableStyle]="{'min-width': '100%'}">
+            <p-table [value]="recentPayments()" [tableStyle]="{'min-width': '100%'}" styleClass="p-datatable-modern p-datatable-sm">
                 <ng-template pTemplate="header">
                     <tr>
-                        <th>Recibo</th>
-                        <th>Titular</th>
-                        <th>Concepto</th>
-                        <th>Monto</th>
-                        <th>Fecha</th>
+                        <th style="width: 100px">Recibo</th>
+                        <th style="min-width: 200px">Titular / Pagador</th>
+                        <th style="min-width: 150px">Concepto</th>
+                        <th style="width: 120px">Monto</th>
+                        <th style="width: 150px">Fecha</th>
                     </tr>
                 </ng-template>
                 <ng-template pTemplate="body" let-pago>
                     <tr>
-                        <td>{{ pago.codigoRecibo || '-' }}</td>
-                        <td>{{ pago.titular?.nombres || '-' }} {{ pago.titular?.apellidos || '' }}</td>
-                        <td>{{ pago.detalles && pago.detalles.length > 0 ? pago.detalles[0].concepto?.nombre : '-' }}</td>
-                        <td>S/ {{ pago.montoTotal | number:'1.2-2' }}</td>
-                        <td>{{ pago.fechaPago | date:'short' }}</td>
+                        <td>
+                            <span class="font-mono text-xs font-bold text-gray-500">
+                                {{ pago.codigoRecibo || '-' }}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="avatar-cell">
+                                <div class="avatar-circle" style="width: 32px; height: 32px; font-size: 11px;">
+                                    {{ getInitials(pago.titular?.nombres, pago.titular?.apellidos) }}
+                                </div>
+                                <div class="info">
+                                    <span class="main-text" style="font-size: 13px;">{{ pago.titular?.nombres }} {{ pago.titular?.apellidos }}</span>
+                                </div>
+                            </div>
+                        </td>
+                        <td>
+                            <span class="text-xs text-gray-600 truncate block max-w-[150px]">
+                                {{ pago.detalles && pago.detalles.length > 0 ? pago.detalles[0].concepto?.nombre : '-' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="font-bold text-emerald-600">
+                                {{ pago.montoTotal | currency:'PEN':'symbol-narrow':'1.2-2' }}
+                            </span>
+                        </td>
+                        <td>
+                            <span class="text-[11px] text-gray-400">
+                                {{ pago.fechaPago | date:'dd/MM/yy HH:mm' }}
+                            </span>
+                        </td>
                     </tr>
                 </ng-template>
             </p-table>

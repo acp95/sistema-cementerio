@@ -101,6 +101,16 @@
     }
 }
 
+.charts-grid {
+    display: grid;
+    grid-template-columns: 1fr 2fr;
+    gap: 1.5rem;
+
+    @media (max-width: 968px) {
+        grid-template-columns: 1fr;
+    }
+}
+
 .content-grid {
     display: grid;
     grid-template-columns: 1fr 1fr;

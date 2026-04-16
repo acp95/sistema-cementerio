@@ -21,64 +21,129 @@
     </p-toolbar>
 
     <p-table #dt [value]="espacios" [rows]="10" [paginator]="true"
-        [globalFilterFields]="['codigo', 'sector.nombre', 'tipo', 'estado']" [tableStyle]="{ 'min-width': '75rem' }"
-        [rowHover]="true" dataKey="id" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} espacios"
-        [showCurrentPageReport]="true">
+        [globalFilterFields]="['codigo', 'sector.nombre', 'tipo', 'estado']" 
+        [tableStyle]="{ 'min-width': '75rem' }"
+        [rowHover]="true" 
+        dataKey="id" 
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} espacios en inventario"
+        [showCurrentPageReport]="true"
+        styleClass="p-datatable-modern">
+
         <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Gestión de Espacios</h5>
-                <p-iconfield>
+            <div class="flex items-center justify-between pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-orange-100 rounded-xl">
+                        <i class="pi pi-box text-orange-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 text-xl font-bold tracking-tight">Inventario de Espacios</h5>
+                        <p class="text-sm text-gray-500 m-0">Control de disponibilidad y ubicación física</p>
+                    </div>
+                </div>
+                <p-iconfield styleClass="w-80">
                     <p-inputicon styleClass="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por Código o Sector..." class="w-full rounded-xl border-gray-200" />
                 </p-iconfield>
             </div>
         </ng-template>
+
         <ng-template #header>
             <tr>
-                <th pSortableColumn="codigo" style="min-width:10rem">
+                <th pSortableColumn="codigo" style="width: 150px">
                     Código <p-sortIcon field="codigo" />
                 </th>
-                <th pSortableColumn="sector.nombre">
-                    Sector <p-sortIcon field="sector.nombre" />
+                <th pSortableColumn="sector.nombre" style="min-width:14rem">
+                    Sector / Pabellón <p-sortIcon field="sector.nombre" />
                 </th>
-                <th pSortableColumn="tipo">
+                <th pSortableColumn="tipo" style="width: 140px">
                     Tipo <p-sortIcon field="tipo" />
                 </th>
-                <th pSortableColumn="fila">Ubicación</th>
-                <th pSortableColumn="estado">
-                    Estado <p-sortIcon field="estado" />
+                <th style="width: 200px">Ubicación Precisa</th>
+                <th pSortableColumn="estado" style="width: 150px">
+                    Disponibilidad <p-sortIcon field="estado" />
                 </th>
-                <th style="min-width: 12rem"></th>
+                <th style="width: 150px" class="text-center">Acciones</th>
             </tr>
         </ng-template>
+
         <ng-template #body let-espacio>
             <tr>
-                <td>{{ espacio.codigo }}</td>
-                <td>{{ espacio.sector?.nombre || '-' }}</td>
                 <td>
-                    <p-tag [value]="espacio.tipo" [severity]="espacio.tipo === 'NICHO' ? 'info' : 'warn'" />
-                </td>
-                <td>Fila {{ espacio.fila }}, Col {{ espacio.columna }}</td>
-                <td>
-                    <p-tag [value]="espacio.estado"
-                        [severity]="espacio.estado === 'disponible' ? 'success' : espacio.estado === 'ocupado' ? 'danger' : 'warn'" />
+                    <span class="px-3 py-1 bg-gray-100 rounded-lg text-sm font-mono font-bold text-gray-700 border border-gray-200">
+                        {{ espacio.codigo }}
+                    </span>
                 </td>
                 <td>
-                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="editEspacio(espacio)" *ngIf="authService.hasPermission('actualizar_espacios')" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                        (click)="deleteEspacio(espacio)" *ngIf="authService.hasPermission('eliminar_espacios')" />
+                    <div class="flex flex-col gap-1">
+                        <span class="font-medium text-gray-800">{{ espacio.sector?.nombre || 'General' }}</span>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold">
+                            ID: {{ espacio.sector?.id }}
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <span class="px-3 py-1 rounded-full text-[10px] font-bold tracking-wider uppercase border"
+                        [ngClass]="{
+                            'bg-blue-50 text-blue-700 border-blue-100': espacio.tipo === 'NICHO',
+                            'bg-amber-50 text-amber-700 border-amber-100': espacio.tipo === 'FOSA'
+                        }">
+                        <i class="pi mr-1 text-[8px]" [ngClass]="espacio.tipo === 'NICHO' ? 'pi-th-large' : 'pi-box'"></i>
+                        {{ espacio.tipo }}
+                    </span>
+                </td>
+                <td>
+                    <div class="flex items-center gap-3 text-xs text-gray-500">
+                        <div class="flex items-center gap-1">
+                            <span class="font-bold text-gray-400">F:</span>
+                            <span>{{ espacio.fila || '-' }}</span>
+                        </div>
+                        <div class="flex items-center gap-1">
+                            <span class="font-bold text-gray-400">C:</span>
+                            <span>{{ espacio.columna || '-' }}</span>
+                        </div>
+                        <div class="flex items-center gap-1" *ngIf="espacio.nivel">
+                            <span class="font-bold text-gray-400">N:</span>
+                            <span>{{ espacio.nivel }}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div [ngSwitch]="espacio.estado">
+                        <span *ngSwitchCase="'disponible'" class="status-badge status-active">
+                             DISPONIBLE
+                        </span>
+                        <span *ngSwitchCase="'ocupado'" class="status-badge status-annulled">
+                             OCUPADO
+                        </span>
+                        <span *ngSwitchDefault class="status-badge status-pending">
+                             {{ espacio.estado | uppercase }}
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <div class="action-buttons justify-center">
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                            (click)="editEspacio(espacio)" *ngIf="authService.hasPermission('actualizar_espacios')" 
+                            pTooltip="Editar ubicación" />
+                        
+                        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                            (click)="deleteEspacio(espacio)" *ngIf="authService.hasPermission('eliminar_espacios')" 
+                            pTooltip="Eliminar permanentemente" />
+                    </div>
                 </td>
             </tr>
         </ng-template>
         <ng-template #emptymessage>
             <tr>
-                <td colspan="6" class="text-center">No se encontraron espacios.</td>
+                <td colspan="6" class="text-center py-8">
+                    <i class="pi pi-inbox text-3xl text-gray-300 block mb-3"></i>
+                    <span class="text-gray-500">No se encontraron espacios en este sector.</span>
+                </td>
             </tr>
         </ng-template>
     </p-table>
 
-    <p-dialog [(visible)]="espacioDialog" [style]="{ width: '450px' }" header="Detalles del Espacio" [modal]="true"
+    <p-dialog [(visible)]="espacioDialog" [style]="{ width: '450px', maxWidth: '95vw' }" header="Detalles del Espacio" [modal]="true"
         class="p-fluid">
         <ng-template #content>
             <div class="flex flex-col gap-6">
@@ -141,5 +206,5 @@
         </ng-template>
     </p-dialog>
 
-    <p-confirmDialog [style]="{ width: '450px' }" />
+    <p-confirmDialog [style]="{ width: '450px', maxWidth: '95vw' }" />
 </div>

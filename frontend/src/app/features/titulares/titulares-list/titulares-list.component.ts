@@ -18,6 +18,8 @@ import { TextareaModule } from 'primeng/textarea';
 import { IconFieldModule } from 'primeng/iconfield';
 import { InputIconModule } from 'primeng/inputicon';
 import { FormsModule } from '@angular/forms';
+import { TooltipModule } from 'primeng/tooltip';
+import { TagModule } from 'primeng/tag';
 
 @Component({
     selector: 'app-titulares-list',
@@ -34,7 +36,9 @@ import { FormsModule } from '@angular/forms';
         TextareaModule,
         IconFieldModule,
         InputIconModule,
-        FormsModule
+        FormsModule,
+        TooltipModule,
+        TagModule
     ],
     providers: [MessageService, ConfirmationService],
     templateUrl: './titulares-list.component.html',
@@ -50,7 +54,9 @@ export class TitularesListComponent implements OnInit {
 
     titulares: any[] = [];
     titularDialog: boolean = false;
+    estadoCuentaDialog: boolean = false;
     titular: any = {};
+    selectedTitular: any = null;
     submitted: boolean = false;
 
     @ViewChild('dt') dt!: Table;
@@ -100,6 +106,42 @@ export class TitularesListComponent implements OnInit {
         this.titularDialog = true;
     }
 
+    viewEstadoCuenta(titular: any): void {
+        this.titularesService.getById(titular.id).subscribe({
+            next: (data) => {
+                this.selectedTitular = data;
+                this.estadoCuentaDialog = true;
+            },
+            error: () => {
+                this.messageService.add({ severity: 'error', summary: 'Error', detail: 'No se pudo cargar el estado de cuenta' });
+            }
+        });
+    }
+
+    printEstadoCuenta(): void {
+        if (!this.selectedTitular) return;
+        
+        const pagos = this.selectedTitular.pagos || [];
+        const exportCols = [
+            { header: 'Recibo', dataKey: 'codigoRecibo' },
+            { header: 'Fecha', dataKey: 'fechaPago' },
+            { header: 'Monto Total (S/)', dataKey: 'montoTotal' },
+            { header: 'Estado', dataKey: 'estado' },
+        ];
+        
+        const formatData = pagos.map((p: any) => ({
+            ...p,
+            fechaPago: new Date(p.fechaPago).toLocaleDateString()
+        }));
+
+        this.exportService.exportPdf(
+            exportCols, 
+            formatData, 
+            `Estado_Cuenta_${this.selectedTitular.dni}`, 
+            `Estado de Cuenta - ${this.selectedTitular.nombres} ${this.selectedTitular.apellidos}`
+        );
+    }
+
     deleteTitular(titular: any): void {
         this.confirmationService.confirm({
             message: '¿Está seguro de eliminar al titular ' + titular.nombres + ' ' + titular.apellidos + '?',
@@ -123,6 +165,7 @@ export class TitularesListComponent implements OnInit {
 
     hideDialog(): void {
         this.titularDialog = false;
+        this.estadoCuentaDialog = false;
         this.submitted = false;
     }
 
@@ -177,4 +220,12 @@ export class TitularesListComponent implements OnInit {
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
+
+    getInitials(nombres: string, apellidos: string): string {
+        if (!nombres && !apellidos) return '?';
+        const n = nombres?.trim().charAt(0) || '';
+        const a = apellidos?.trim().charAt(0) || '';
+        return (n + a).toUpperCase();
+    }
 }
+

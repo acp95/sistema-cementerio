@@ -1,6 +1,6 @@
 <p-toast />
 
-<p-dialog [(visible)]="visible" [style]="{ width: '800px' }" [header]="'Permisos del Rol: ' + (rol?.nombre || '')"
+<p-dialog [(visible)]="visible" [style]="{ width: '850px', maxWidth: '95vw' }" [header]="'Permisos del Rol: ' + (rol?.nombre || '')"
     [modal]="true" [closable]="true" (onShow)="onVisibleChange(true)" (visibleChange)="visibleChange.emit($event)">
     <ng-template #content>
         <div class="permissions-matrix">
@@ -15,6 +15,7 @@
                         <th class="text-center" style="width: 100px">Eliminar</th>
                         <th class="text-center" style="width: 100px">Anular</th>
                         <th class="text-center" style="width: 100px">Revertir</th>
+                        <th class="text-center" style="width: 100px">Cobrar</th>
                     </tr>
                 </ng-template>
                 <ng-template #body let-row let-i="rowIndex">
@@ -38,6 +39,9 @@
                         </td>
                         <td class="text-center">
                             <p-toggleSwitch *ngIf="hasPermisoInSystem(row.modulo.slug, 'revertir_anulacion')" [(ngModel)]="row.revertir" />
+                        </td>
+                        <td class="text-center">
+                            <p-toggleSwitch *ngIf="hasPermisoInSystem(row.modulo.slug, 'cobrar')" [(ngModel)]="row.cobrar" />
                         </td>
                     </tr>
                 </ng-template>

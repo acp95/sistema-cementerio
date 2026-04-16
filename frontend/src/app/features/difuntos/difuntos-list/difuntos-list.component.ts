@@ -107,6 +107,7 @@ export class DifuntosListComponent implements OnInit {
         this.titularesService.getAll().subscribe({
             next: (data) => {
                 this.titulares = data.map((t: any) => ({
+                    ...t,
                     label: `${t.nombres} ${t.apellidos} (${t.dni})`,
                     value: t.id
                 }));
@@ -118,8 +119,8 @@ export class DifuntosListComponent implements OnInit {
     loadDifuntos(): void {
         this.difuntosService.getAll().subscribe({
             next: (data) => {
-                this.difuntos = data; // Usaremos una propiedad normal en lugar de observable directo si falla el async
-                this.cdr.detectChanges(); // Forzar actualización de vista
+                this.difuntos = data;
+                this.cdr.detectChanges();
                 console.log('Difuntos loaded:', data.length);
             },
             error: (error) => {
@@ -137,15 +138,11 @@ export class DifuntosListComponent implements OnInit {
 
     editDifunto(difunto: any): void {
         this.difunto = { ...difunto };
-
-        // Ensure dates are Date objects for DatePicker
         if (this.difunto.fechaNacimiento) this.difunto.fechaNacimiento = new Date(this.difunto.fechaNacimiento);
         if (this.difunto.fechaDefuncion) this.difunto.fechaDefuncion = new Date(this.difunto.fechaDefuncion);
-
         if (this.difunto.titular) {
             this.difunto.titularId = this.difunto.titular.id;
         }
-
         this.difuntoDialog = true;
     }
 
@@ -179,21 +176,21 @@ export class DifuntosListComponent implements OnInit {
         this.submitted = true;
 
         if (this.difunto.nombres?.trim() && this.difunto.apellidos?.trim()) {
+            const dto: any = {
+                nombres: this.difunto.nombres,
+                apellidos: this.difunto.apellidos,
+                dni: this.difunto.dni,
+                fechaNacimiento: this.difunto.fechaNacimiento,
+                fechaDefuncion: this.difunto.fechaDefuncion,
+                actaDefuncion: this.difunto.actaDefuncion,
+                sexo: this.difunto.sexo,
+                causaMuerte: this.difunto.causaMuerte,
+                observaciones: this.difunto.observaciones,
+                titularId: this.difunto.titularId
+            };
+
             if (this.difunto.id) {
-                // Update - only update difunto data
-                const updateDto: any = {
-                    nombres: this.difunto.nombres,
-                    apellidos: this.difunto.apellidos,
-                    dni: this.difunto.dni,
-                    fechaNacimiento: this.difunto.fechaNacimiento,
-                    fechaDefuncion: this.difunto.fechaDefuncion,
-                    actaDefuncion: this.difunto.actaDefuncion,
-                    sexo: this.difunto.sexo,
-                    causaMuerte: this.difunto.causaMuerte,
-                    observaciones: this.difunto.observaciones,
-                    titularId: this.difunto.titularId
-                };
-                this.difuntosService.update(this.difunto.id, updateDto).subscribe({
+                this.difuntosService.update(this.difunto.id, dto).subscribe({
                     next: () => {
                         this.messageService.add({ severity: 'success', summary: 'Exitoso', detail: 'Difunto Actualizado', life: 3000 });
                         this.loadDifuntos();
@@ -202,7 +199,7 @@ export class DifuntosListComponent implements OnInit {
                     error: (err) => {
                         console.error('Error updating difunto:', err);
                         if (err.status === 409) {
-                            const mensaje = err.error?.message || 'Ya existe un registro con estos datos únicos (DNI o Acta de Defunción).';
+                            const mensaje = err.error?.message || 'Ya existe un registro con estos datos únicos.';
                             this.messageService.add({ severity: 'warn', summary: '⚠️ Advertencia', detail: mensaje, life: 5000 });
                         } else {
                             this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la actualización' });
@@ -210,49 +207,19 @@ export class DifuntosListComponent implements OnInit {
                     }
                 });
             } else {
-                // Create - send difunto data
-                const createDto: any = {
-                    nombres: this.difunto.nombres,
-                    apellidos: this.difunto.apellidos,
-                    dni: this.difunto.dni,
-                    fechaNacimiento: this.difunto.fechaNacimiento,
-                    fechaDefuncion: this.difunto.fechaDefuncion,
-                    actaDefuncion: this.difunto.actaDefuncion,
-                    sexo: this.difunto.sexo,
-                    causaMuerte: this.difunto.causaMuerte,
-                    observaciones: this.difunto.observaciones,
-                    titularId: this.difunto.titularId
-                };
-
-                this.difuntosService.create(createDto).subscribe({
+                this.difuntosService.create(dto).subscribe({
                     next: () => {
-                        this.messageService.add({
-                            severity: 'success',
-                            summary: 'Exitoso',
-                            detail: 'Difunto creado correctamente',
-                            life: 3000
-                        });
+                        this.messageService.add({ severity: 'success', summary: 'Exitoso', detail: 'Difunto creado correctamente', life: 3000 });
                         this.loadDifuntos();
                         this.hideDialog();
                     },
                     error: (err) => {
                         console.error('Error creating difunto:', err);
-                        // Mostrar mensaje específico según el error
                         if (err.status === 409) {
-                            // Error de conflicto (DNI duplicado o difunto ya inhumado)
                             const mensaje = err.error?.message || 'Ya existe un registro con estos datos';
-                            this.messageService.add({
-                                severity: 'warn',
-                                summary: '⚠️ Advertencia',
-                                detail: mensaje,
-                                life: 5000
-                            });
+                            this.messageService.add({ severity: 'warn', summary: '⚠️ Advertencia', detail: mensaje, life: 5000 });
                         } else {
-                            this.messageService.add({
-                                severity: 'error',
-                                summary: 'Error',
-                                detail: 'Falló la creación del registro'
-                            });
+                            this.messageService.add({ severity: 'error', summary: 'Error', detail: 'Falló la creación del registro' });
                         }
                     }
                 });
@@ -263,4 +230,12 @@ export class DifuntosListComponent implements OnInit {
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
+
+    getInitials(nombres: string, apellidos: string): string {
+        if (!nombres && !apellidos) return '?';
+        const n = nombres?.trim().charAt(0) || '';
+        const a = apellidos?.trim().charAt(0) || '';
+        return (n + a).toUpperCase();
+    }
 }
+

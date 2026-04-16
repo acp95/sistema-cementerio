@@ -14,75 +14,142 @@
 
     <p-table #dt [value]="inhumaciones" [rows]="10" [paginator]="true"
         [globalFilterFields]="['numeroActa', 'difunto.nombres', 'espacio.codigo']"
-        [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
+        [tableStyle]="{ 'min-width': '75rem' }" 
+        [rowHover]="true" 
+        dataKey="id"
         currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} inhumaciones"
-        [showCurrentPageReport]="true">
+        [showCurrentPageReport]="true"
+        styleClass="p-datatable-modern">
+        
         <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Gestión de Inhumaciones</h5>
-                <p-iconfield>
+            <div class="flex items-center justify-between pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-secondary-100 rounded-xl">
+                        <i class="pi pi-book text-secondary-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 text-xl font-bold tracking-tight">Registro de Inhumaciones</h5>
+                        <p class="text-sm text-gray-500 m-0">Control de sepelios y ubicación de restos</p>
+                    </div>
+                </div>
+                <p-iconfield styleClass="w-80">
                     <p-inputicon styleClass="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por Acta, Difunto o Espacio..." class="w-full rounded-xl border-gray-200" />
                 </p-iconfield>
             </div>
         </ng-template>
+
         <ng-template #header>
             <tr>
-                <th pSortableColumn="id" style="min-width:9rem">
-                    N° Inhum. <p-sortIcon field="id" />
+                <th pSortableColumn="id" style="width: 120px">
+                    ID <p-sortIcon field="id" />
                 </th>
-                <th pSortableColumn="difunto.nombres" style="min-width:14rem">
+                <th pSortableColumn="difunto.nombres" style="min-width:18rem">
                     Difunto <p-sortIcon field="difunto.nombres" />
                 </th>
                 <th pSortableColumn="espacio.codigo" style="min-width:14rem">
-                    Espacio <p-sortIcon field="espacio.codigo" />
+                    Ubicación / Espacio <p-sortIcon field="espacio.codigo" />
                 </th>
-                <th pSortableColumn="fechaInhumacion">
+                <th pSortableColumn="fechaInhumacion" style="width: 150px">
                     Fecha <p-sortIcon field="fechaInhumacion" />
                 </th>
-                <th pSortableColumn="numeroActa">
-                    Acta <p-sortIcon field="numeroActa" />
-                </th>
-                <th style="min-width: 8rem">Pago</th>
-                <th style="min-width: 12rem"></th>
+                <th style="width: 130px">Pago</th>
+                <th style="width: 130px">Estado</th>
+                <th style="width: 180px" class="text-center">Acciones</th>
             </tr>
         </ng-template>
+
         <ng-template #body let-inh>
-            <tr>
-                <td class="font-bold">N° {{ inh.id | number:'5.0-0' }}</td>
-                <td>{{ inh.difunto?.nombres || '-' }} {{ inh.difunto?.apellidos || '' }}</td>
-                <td>{{ inh.espacio?.codigo || '-' }}</td>
-                <td>{{ inh.fechaInhumacion | date:'dd/MM/yyyy' }}</td>
+            <tr [ngClass]="{'opacity-60 grayscale': inh.estado === 'ANULADO'}">
                 <td>
-                    <p-tag *ngIf="inh.pagos && inh.pagos.length > 0 && inh.pagos[0].estado === 'PAGADO'" 
-                        value="Pagado" severity="success" />
-                    <p-tag *ngIf="inh.pagos && inh.pagos.length > 0 && inh.pagos[0].estado === 'PENDIENTE'" 
-                        value="Pendiente" severity="warn" />
-                    <p-tag *ngIf="!inh.pagos || inh.pagos.length === 0" 
-                        value="Por Pagar" severity="secondary" />
+                    <span class="px-2 py-1 bg-gray-100 rounded text-xs font-mono font-bold text-gray-600">
+                        #{{ inh.id | number:'5.0-0' }}
+                    </span>
                 </td>
                 <td>
-                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="editInhumacion(inh)" *ngIf="inh.estado !== 'ANULADO' && authService.hasPermission('actualizar_inhumaciones')" />
-                    <p-button icon="pi pi-print" severity="secondary" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="imprimirConstancia(inh)" pTooltip="Imprimir Constancia" />
-                    <p-button icon="pi pi-ban" severity="warn" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="anularInhumacion(inh)" pTooltip="Anular"
-                        *ngIf="inh.estado !== 'ANULADO' && authService.hasPermission('anular_inhumaciones')" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                        (click)="deleteInhumacion(inh)" pTooltip="Eliminar permanentemente"
-                        *ngIf="authService.hasPermission('eliminar_inhumaciones')" />
+                    <div class="avatar-cell">
+                        <div class="avatar-circle" [style.background]="inh.estado === 'ANULADO' ? '#e2e8f0' : ''">
+                            {{ getInitials(inh.difunto?.nombres, inh.difunto?.apellidos) }}
+                        </div>
+                        <div class="info">
+                            <span class="main-text">{{ inh.difunto?.nombres }} {{ inh.difunto?.apellidos }}</span>
+                            <span class="sub-text" *ngIf="inh.numeroActa">Acta: {{ inh.numeroActa }}</span>
+                        </div>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center gap-2">
+                            <span class="px-2 py-0.5 bg-primary-50 text-primary-700 border border-primary-100 rounded-md text-xs font-bold">
+                                {{ inh.espacio?.codigo || 'S/C' }}
+                            </span>
+                            <span class="text-xs text-gray-500">{{ inh.espacio?.tipoEspacio }}</span>
+                        </div>
+                        <span class="text-[10px] text-gray-400 uppercase tracking-widest font-semibold" *ngIf="inh.espacio?.sector">
+                            {{ inh.espacio.sector.nombre }}
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <div class="flex flex-col">
+                        <span class="text-sm font-medium text-gray-700">{{ inh.fechaInhumacion | date:'dd/MM/yyyy' }}</span>
+                        <span class="text-xs text-gray-400" *ngIf="inh.horaInhumacion">{{ inh.horaInhumacion }} hrs</span>
+                    </div>
+                </td>
+                <td>
+                    <div [ngSwitch]="inh.pagos && inh.pagos.length > 0 ? inh.pagos[0].estado : 'POR_PAGAR'">
+                        <span *ngSwitchCase="'PAGADO'" class="status-badge status-paid">
+                            <i class="pi pi-check-circle"></i> PAGADO
+                        </span>
+                        <span *ngSwitchCase="'PENDIENTE'" class="status-badge status-pending">
+                            <i class="pi pi-clock"></i> PENDIENTE
+                        </span>
+                        <span *ngSwitchDefault class="status-badge status-annulled">
+                            <i class="pi pi-exclamation-circle"></i> POR PAGAR
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <span class="status-badge" 
+                        [ngClass]="{'status-active': inh.estado === 'ACTIVO', 'status-annulled': inh.estado === 'ANULADO', 'status-pending': inh.estado !== 'ACTIVO' && inh.estado !== 'ANULADO'}">
+                        {{ inh.estado }}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons justify-center">
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                            (click)="editInhumacion(inh)" *ngIf="inh.estado !== 'ANULADO' && authService.hasPermission('actualizar_inhumaciones')" 
+                            pTooltip="Editar detalles" />
+                        
+                        <p-button icon="pi pi-print" severity="secondary" [rounded]="true" [text]="true"
+                            (click)="imprimirConstancia(inh)" pTooltip="Imprimir Constancia" />
+                        
+                        <p-button icon="pi pi-ban" severity="warn" [rounded]="true" [text]="true"
+                            (click)="anularInhumacion(inh)" pTooltip="Anular"
+                            *ngIf="inh.estado !== 'ANULADO' && authService.hasPermission('anular_inhumaciones')" />
+                        
+                        <p-button icon="pi pi-refresh" severity="warn" [rounded]="true" [text]="true"
+                            (click)="revertirAnulacion(inh)" pTooltip="Revertir Anulación"
+                            *ngIf="inh.estado === 'ANULADO' && authService.hasPermission('anular_inhumaciones')" />
+                        
+                        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                            (click)="deleteInhumacion(inh)" pTooltip="Eliminar permanentemente"
+                            *ngIf="authService.hasPermission('eliminar_inhumaciones')" />
+                    </div>
                 </td>
             </tr>
         </ng-template>
         <ng-template #emptymessage>
             <tr>
-                <td colspan="5" class="text-center">No se encontraron inhumaciones.</td>
+                <td colspan="7" class="text-center py-8">
+                    <i class="pi pi-folder-open text-3xl text-gray-300 block mb-3"></i>
+                    <span class="text-gray-500">No se encontraron inhumaciones registradas.</span>
+                </td>
             </tr>
         </ng-template>
     </p-table>
 
-    <p-dialog [(visible)]="inhumacionDialog" [style]="{ width: '600px' }" header="Detalles de Inhumación" [modal]="true"
+    <p-dialog [(visible)]="inhumacionDialog" [style]="{ width: '600px', maxWidth: '95vw' }" header="Detalles de Inhumación" [modal]="true"
         class="p-fluid">
         <ng-template #content>
             <div class="flex flex-col gap-6">
@@ -91,9 +158,23 @@
                     <label for="difuntoId" class="block font-bold mb-3">Difunto *</label>
                     <p-select id="difuntoId" name="difuntoId" [(ngModel)]="inhumacion.difuntoId" [options]="difuntos"
                         optionLabel="label" optionValue="value" placeholder="Seleccione Difunto" [filter]="true"
-                        appendTo="body" styleClass="w-full" (onChange)="onDifuntoChange($event.value)" />
+                        appendTo="body" styleClass="w-full" (onChange)="onDifuntoChange($event.value)"
+                        panelStyleClass="titular-select-panel">
+                        <ng-template #item let-difunto>
+                            <div class="titular-item-dropdown">
+                                <div class="avatar-circle">
+                                    <i class="pi pi-user"></i>
+                                </div>
+                                <div class="titular-text">
+                                    <span class="name">{{ difunto.nombres }} {{ difunto.apellidos }}</span>
+                                    <span class="dni">{{ difunto.dni || 'SIN DNI' }}</span>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </p-select>
                     <small class="text-red-500" *ngIf="submitted && !inhumacion.difuntoId">Difunto requerido.</small>
                 </div>
+
 
                 <!-- Filtro de Sector & Espacio -->
                 <div class="grid grid-cols-2 gap-4">
@@ -117,8 +198,21 @@
                     <label for="titularId" class="block font-bold mb-3">Titular Responsable</label>
                     <p-select id="titularId" name="titularId" [(ngModel)]="inhumacion.titularId" [options]="titulares"
                         optionLabel="label" optionValue="value" placeholder="Seleccione Titular" [filter]="true"
-                        appendTo="body" styleClass="w-full" />
+                        appendTo="body" styleClass="w-full" panelStyleClass="titular-select-panel">
+                        <ng-template #item let-titular>
+                            <div class="titular-item-dropdown">
+                                <div class="avatar-circle">
+                                    <i class="pi pi-user"></i>
+                                </div>
+                                <div class="titular-text">
+                                    <span class="name">{{ titular.nombres }} {{ titular.apellidos }}</span>
+                                    <span class="dni">{{ titular.dni }}</span>
+                                </div>
+                            </div>
+                        </ng-template>
+                    </p-select>
                 </div>
+
 
                 <!-- Fecha y Hora Inhumación (separados) -->
                 <div class="grid grid-cols-2 gap-4">
@@ -224,5 +318,5 @@
         </ng-template>
     </p-dialog>
 
-    <p-confirmDialog [style]="{ width: '450px' }" />
+    <p-confirmDialog [style]="{ width: '450px', maxWidth: '95vw' }" />
 </div>

@@ -38,47 +38,147 @@ input {
     }
 }
 
-::ng-deep .p-toolbar {
-    background: #fff;
-    border: 1px solid #dee2e6;
-    border-radius: .25rem;
-    padding: .75rem 1rem
-}
+::ng-deep {
+    .p-toolbar {
+        background: #fff;
+        border: 1px solid #dee2e6;
+        border-radius: .25rem;
+        padding: .75rem 1rem
+    }
 
-::ng-deep .p-datatable {
-    background: #fff
-}
+    .p-datatable {
+        background: #fff
+    }
 
-::ng-deep .p-datatable .p-datatable-header {
-    background: #fff;
-    border: none;
-    padding: 0
-}
+    .p-datatable .p-datatable-header {
+        background: #fff;
+        border: none;
+        padding: 0
+    }
 
-::ng-deep .p-datatable .p-datatable-thead>tr>th {
-    background: #f8f9fa;
-    color: #495057;
-    font-weight: 500;
-    padding: .75rem;
-    border: none;
-    border-bottom: 2px solid #dee2e6;
-    font-size: .875rem
-}
+    .p-datatable .p-datatable-thead>tr>th {
+        background: #f8f9fa;
+        color: #495057;
+        font-weight: 500;
+        padding: .75rem;
+        border: none;
+        border-bottom: 2px solid #dee2e6;
+        font-size: .875rem
+    }
 
-::ng-deep .p-datatable .p-datatable-tbody>tr:hover {
-    background: #f8f9fa
-}
+    .p-datatable .p-datatable-tbody>tr:hover {
+        background: #f8f9fa
+    }
 
-::ng-deep .p-datatable .p-datatable-tbody>tr>td {
-    padding: .75rem;
-    border-top: 1px solid #dee2e6;
-    font-size: .875rem;
-    color: #495057
-}
+    .p-datatable .p-datatable-tbody>tr>td {
+        padding: .75rem;
+        border-top: 1px solid #dee2e6;
+        font-size: .875rem;
+        color: #495057
+    }
 
-::ng-deep .p-datatable .p-paginator {
-    background: #fff;
-    border: none;
-    border-top: 1px solid #dee2e6;
-    padding: .75rem
+    .p-datatable .p-paginator {
+        background: #fff;
+        border: none;
+        border-top: 1px solid #dee2e6;
+        padding: .75rem
+    }
+
+    // Premium Dropdown Item Styles
+    .titular-select-panel {
+        background: #ffffff !important;
+        border-radius: 12px !important;
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1) !important;
+        border: 1px solid #e2e8f0 !important;
+        margin-top: 4px !important;
+
+        .p-select-list {
+            padding: 0.5rem !important;
+            display: flex;
+            flex-direction: column;
+            gap: 0.25rem;
+        }
+
+        .p-select-option {
+            border-radius: 10px !important;
+            padding: 0.25rem !important;
+            margin-bottom: 2px;
+            transition: all 0.2s ease;
+            border: 1px solid transparent;
+
+            &:hover {
+                background: #f8fafc !important;
+                border-color: #e2e8f0 !important;
+            }
+
+            &.p-highlight {
+                background: #f0fdf9 !important;
+                color: #065f46 !important;
+                border-color: #10b981 !important;
+                
+                .avatar-circle {
+                    background: #10b981 !important;
+                    color: white !important;
+                }
+            }
+        }
+
+        .titular-item-dropdown {
+            display: flex;
+            flex-direction: row !important;
+            align-items: center;
+            gap: 1rem;
+            padding: 0.5rem;
+            width: 100%;
+
+            .avatar-circle {
+                width: 38px;
+                height: 38px;
+                border-radius: 10px;
+                background: #f1f5f9;
+                color: #64748b;
+                display: flex;
+                align-items: center;
+                justify-content: center;
+                font-size: 1.1rem;
+                flex-shrink: 0;
+                transition: all 0.2s;
+            }
+
+            .titular-text {
+                display: flex;
+                flex-direction: column;
+                gap: 0.1rem;
+                flex: 1;
+                overflow: hidden;
+
+                .name {
+                    font-weight: 700;
+                    font-size: 1rem;
+                    color: #1e293b;
+                    white-space: nowrap;
+                    overflow: hidden;
+                    text-overflow: ellipsis;
+                }
+
+                .dni {
+                    font-size: 0.8rem;
+                    color: #64748b;
+                    display: flex;
+                    align-items: center;
+                    gap: 0.4rem;
+
+                    &::before {
+                        content: 'DNI';
+                        font-size: 0.65rem;
+                        background: #f1f5f9;
+                        padding: 1px 5px;
+                        border-radius: 4px;
+                        font-weight: 800;
+                        color: #475569;
+                    }
+                }
+            }
+        }
+    }
 }

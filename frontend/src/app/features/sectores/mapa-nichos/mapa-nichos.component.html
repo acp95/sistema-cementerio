@@ -106,23 +106,32 @@
             </div>
         </div>
 
-        <!-- Nichos Grid -->
-        <div class="nichos-container">
-            <div class="nichos-grid" [class.view-compact]="viewMode() === 'compact'" *ngIf="espacios().length > 0">
-                @for (espacio of espacios(); track espacio.id) {
-                <div class="nicho-card" [ngClass]="getEstadoClass(espacio.estado)"
-                    [class.filtered-out]="activeFilter() && espacio.estado !== activeFilter()"
-                    (click)="onNichoClick(espacio)" [pTooltip]="getTooltipText(espacio)" tooltipPosition="top">
-                    <div class="nicho-number">{{ getNichoLabel(espacio) }}</div>
-                    <div class="nicho-icon">
-                        <i class="pi" [ngClass]="getIconClass(espacio.estado)"></i>
+    <!-- Nichos Grid (Pavilion) -->
+    <div class="nichos-container">
+        <!-- Pavilion Wall View -->
+        <div class="pavilion-wall" [class.view-compact]="viewMode() === 'compact'" *ngIf="espacios().length > 0">
+            @for (row of matrix(); track row.fila) {
+            <div class="pavilion-row">
+                <div class="row-label">Fila {{ row.fila }}</div>
+                <div class="row-nichos">
+                    @for (espacio of row.espacios; track espacio.id) {
+                    <div class="nicho-card" [ngClass]="getEstadoClass(espacio.estado)"
+                        [class.is-fosa]="espacio.tipoEspacio.toLowerCase() === 'fosa'"
+                        [class.filtered-out]="activeFilter() && espacio.estado !== activeFilter()"
+                        (click)="onNichoClick(espacio)" [pTooltip]="getTooltipText(espacio)" tooltipPosition="top">
+                        <div class="nicho-number">{{ getNichoLabel(espacio) }}</div>
+                        <div class="nicho-icon">
+                            <i class="pi" [ngClass]="getIconClass(espacio.estado)"></i>
+                        </div>
+                        <div class="nicho-difunto" *ngIf="espacio.ocupante">
+                            {{ espacio.ocupante.difunto }}
+                        </div>
                     </div>
-                    <div class="nicho-difunto" *ngIf="espacio.ocupante">
-                        {{ espacio.ocupante.difunto }}
-                    </div>
+                    }
                 </div>
-                }
             </div>
+            }
+        </div>
 
             <!-- Empty State -->
             <div *ngIf="espacios().length === 0" class="empty-state">
@@ -137,7 +146,7 @@
 
     <!-- Details Dialog -->
     <p-dialog [(visible)]="showDialog" [header]="'Nicho ' + (selectedEspacio ? getNichoLabel(selectedEspacio) : '')"
-        [modal]="true" [style]="{ width: '480px' }" styleClass="nicho-dialog" [draggable]="false" [resizable]="false">
+        [modal]="true" [style]="{ width: '480px', maxWidth: '95vw' }" styleClass="nicho-dialog" [draggable]="false" [resizable]="false">
         <ng-template #content>
             <div *ngIf="selectedEspacio" class="dialog-content">
                 <div class="detail-grid">
@@ -194,7 +203,7 @@
                                 <div class="detail-label">Titular</div>
                                 <div class="detail-value">{{ selectedEspacio.ocupante.titular }}</div>
                             </div>
-                            <div class="detail-item">
+                            <div class="detail-item" *ngIf="selectedEspacio.ocupante.fechaInhumacion">
                                 <div class="detail-label">Fecha Inhumación</div>
                                 <div class="detail-value">{{ selectedEspacio.ocupante.fechaInhumacion |
                                     date:'dd/MM/yyyy' }}</div>
@@ -202,11 +211,82 @@
                         </div>
                     </div>
                 </div>
+
+                <!-- Reservation View (if RESERVADO but no ocupante logic elsewhere) -->
+                <div *ngIf="selectedEspacio.estado === 'RESERVADO' && selectedEspacio.ocupante">
+                    <div class="divider"></div>
+                    <div class="reserva-section">
+                        <h4><i class="pi pi-lock"></i> Información de Reserva</h4>
+                        <div class="detail-grid">
+                            <div class="detail-item">
+                                <div class="detail-label">Reservado por</div>
+                                <div class="detail-value text-primary font-bold">{{ selectedEspacio.ocupante.titular }}
+                                </div>
+                            </div>
+                            <div class="detail-item">
+                                <div class="detail-label">Estado</div>
+                                <div class="detail-value">
+                                    <p-tag value="PENDIENTE DE USO" severity="info" />
+                                </div>
+                            </div>
+                        </div>
+                        <p class="reserva-note">
+                            <i class="pi pi-info-circle"></i>
+                            Este espacio está reservado. Para ocuparlo, proceda al registro de inhumación.
+                        </p>
+                    </div>
+                </div>
             </div>
         </ng-template>
 
         <ng-template #footer>
-            <p-button label="Cerrar" icon="pi pi-times" (onClick)="showDialog = false" severity="secondary" />
+            <div class="dialog-footer">
+                <p-button *ngIf="selectedEspacio?.estado === 'LIBRE'" label="Reservar Nicho" icon="pi pi-lock"
+                    (onClick)="openReservaDialog()" severity="info" />
+                <p-button label="Cerrar" icon="pi pi-times" (onClick)="showDialog = false" severity="secondary" />
+            </div>
+        </ng-template>
+    </p-dialog>
+
+    <!-- Selection Dialog for Titular -->
+    <p-dialog [(visible)]="showReservaDialog" header="Seleccionar Titular para Reserva" [modal]="true"
+        [style]="{ width: '550px', maxWidth: '95vw' }" styleClass="reserva-selection-dialog" [draggable]="false" [resizable]="false">
+        <div class="reserva-form">
+            <div class="search-box">
+                <p-iconField iconPosition="left">
+                    <p-inputIcon styleClass="pi pi-search" />
+                    <input type="text" pInputText placeholder="Buscar por DNI o Nombre del Titular..."
+                        [(ngModel)]="searchText" (input)="filterTitulares()" class="w-full" />
+                </p-iconField>
+            </div>
+
+            <div class="titulares-list">
+                <div *ngFor="let t of filteredTitulares" class="titular-item" [class.selected]="selectedTitular?.id === t.id"
+                    (click)="onSelectTitular(t)">
+                    <div class="titular-avatar">
+                        <i class="pi pi-user"></i>
+                    </div>
+                    <div class="titular-info">
+                        <span class="titular-name">{{ t.nombres }} {{ t.apellidos }}</span>
+                        <span class="titular-dni">{{ t.dni || 'Sin DNI' }}</span>
+                    </div>
+                    <div class="select-indicator">
+                        <i class="pi" [ngClass]="selectedTitular?.id === t.id ? 'pi-check-circle' : ''"></i>
+                    </div>
+                </div>
+
+                <div *ngIf="filteredTitulares.length === 0" class="empty-results">
+                    <i class="pi pi-search"></i>
+                    <p>No se encontraron titulares que coincidan con la búsqueda.</p>
+                </div>
+            </div>
+        </div>
+
+        <ng-template #footer>
+            <p-button label="Cancelar" icon="pi pi-times" (onClick)="showReservaDialog = false" severity="secondary"
+                [disabled]="reserving" />
+            <p-button label="Confirmar Reserva" icon="pi pi-check" (onClick)="confirmarReserva()" severity="success"
+                [disabled]="!selectedTitular || reserving" [loading]="reserving" />
         </ng-template>
     </p-dialog>
 </div>

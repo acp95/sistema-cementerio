@@ -3,6 +3,7 @@ import { ConfigModule, ConfigService } from '@nestjs/config';
 import { TypeOrmModule } from '@nestjs/typeorm';
 import { AppController } from './app.controller';
 import { AppService } from './app.service';
+import { ClsModule } from 'nestjs-cls';
 
 // Auth Entities
 import { Rol } from './auth/entities/rol.entity';
@@ -32,6 +33,8 @@ import { AuthModule } from './auth/auth.module';
 import { InfraestructuraModule } from './infraestructura/infraestructura.module';
 import { RegistroModule } from './registro/registro.module';
 import { CajaModule } from './caja/caja.module';
+import { AuditoriaModule } from './auditoria/auditoria.module';
+import { BackupModule } from './infraestructura/backup/backup.module';
 
 
 @Module({
@@ -74,11 +77,17 @@ import { CajaModule } from './caja/caja.module';
       }),
       inject: [ConfigService],
     }),
+    ClsModule.forRoot({
+      global: true,
+      middleware: { mount: true },
+    }),
     // Business modules
     AuthModule,
     InfraestructuraModule,
     RegistroModule,
     CajaModule,
+    AuditoriaModule,
+    BackupModule,
   ],
   controllers: [AppController],
   providers: [AppService],

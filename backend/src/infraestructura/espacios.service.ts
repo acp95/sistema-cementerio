@@ -62,6 +62,7 @@ export class EspaciosService {
             .leftJoinAndSelect('espacio.inhumaciones', 'inhumacion')
             .leftJoinAndSelect('inhumacion.difunto', 'difunto')
             .leftJoinAndSelect('inhumacion.titular', 'titular')
+            .leftJoinAndSelect('espacio.titular', 'titularReserva')
             .where('espacio.sectorId = :sectorId', { sectorId })
             .orderBy('espacio.fila', 'ASC')
             .addOrderBy('espacio.columna', 'ASC')
@@ -95,9 +96,23 @@ export class EspaciosService {
                         ? `${inhumacionActiva.titular.nombres || ''} ${inhumacionActiva.titular.apellidos || ''}`.trim()
                         : 'Sin titular',
                     fechaInhumacion: inhumacionActiva.fechaInhumacion,
-                } : null,
+                } : (espacio.estado === EstadoEspacio.RESERVADO && espacio.titular ? {
+                    difunto: '(RESERVADO)',
+                    titular: `${espacio.titular.nombres || ''} ${espacio.titular.apellidos || ''}`.trim(),
+                    fechaInhumacion: null
+                } : null),
             };
         });
+    }
+
+    async reservar(id: number, titularId: number): Promise<Espacio> {
+        const espacio = await this.findOne(id);
+        if (espacio.estado !== EstadoEspacio.LIBRE) {
+            throw new Error('Solo se pueden reservar espacios que estén LIBRES');
+        }
+        espacio.estado = EstadoEspacio.RESERVADO;
+        espacio.titularId = titularId;
+        return await this.espaciosRepository.save(espacio);
     }
 
     async update(id: number, updateEspacioDto: UpdateEspacioDto): Promise<Espacio> {

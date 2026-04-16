@@ -3,7 +3,7 @@
 ## Visión General
 
 Sistema full-stack para la gestión integral de cementerios municipales, desarrollado con:
-- **Backend**: NestJS + TypeORM + MySQL
+- **Backend**: NestJS + TypeORM + PostgreSQL
 - **Frontend**: Angular 19 + PrimeNG + Tailwind CSS
 
 ---
@@ -13,18 +13,18 @@ Sistema full-stack para la gestión integral de cementerios municipales, desarro
 ```
 backend/src/
 ├── main.ts                    # Punto de entrada
-├── app.module.ts              # Módulo raíz
+├── app.module.ts              # Módulo raíz (Incluye ClsModule)
 ├── app.controller.ts          # Controller raíz (health checks)
 ├── app.service.ts             # Servicio raíz (estadísticas dashboard)
 │
 ├── database/                  # 🗄️ Configuración de Base de Datos
-│   └── database.module.ts     # Conexión TypeORM a MySQL
+│   └── database.module.ts     # Conexión TypeORM a PostgreSQL
 │
 ├── auth/                      # 🔐 Autenticación y Autorización
 │   ├── auth.module.ts
 │   ├── auth.controller.ts     # Login, registro
 │   ├── auth.service.ts        # JWT, validación
-│   ├── strategies/            # Passport strategies
+│   ├── strategies/            # Passport strategies (Inyecta usuario en CLS)
 │   ├── guards/                # JWT Guard, Roles Guard
 │   └── decorators/            # @Roles(), @Public()
 │
@@ -33,7 +33,7 @@ backend/src/
 │   ├── sectores.controller.ts   # CRUD sectores
 │   ├── sectores.service.ts
 │   ├── espacios.controller.ts   # CRUD espacios/nichos
-│   ├── espacios.service.ts      # Incluye mapa visual
+│   ├── espacios.service.ts      # Incluye mapa visual interactivo (Muro Pabellón)
 │   ├── dto/
 │   └── entities/
 │       ├── sector.entity.ts
@@ -42,11 +42,8 @@ backend/src/
 ├── registro/                  # 📋 Gestión de Registros (Personas)
 │   ├── registro.module.ts
 │   ├── difuntos.controller.ts    # CRUD difuntos
-│   ├── difuntos.service.ts       # Incluye validación DNI único
-│   ├── titulares.controller.ts   # CRUD titulares/responsables
-│   ├── titulares.service.ts
+│   ├── titulares.controller.ts   # CRUD titulares/responsables (Incluye Estado de Cuenta)
 │   ├── inhumaciones.controller.ts # CRUD inhumaciones
-│   ├── inhumaciones.service.ts    # Validación difunto único
 │   ├── dto/
 │   └── entities/
 │       ├── difunto.entity.ts      # Relación 1:1 con Inhumacion
@@ -56,16 +53,18 @@ backend/src/
 ├── caja/                      # 💰 Gestión Financiera
 │   ├── caja.module.ts
 │   ├── conceptos-pago.controller.ts  # Tipos de cobro
-│   ├── conceptos-pago.service.ts
-│   ├── pagos.controller.ts           # Registro de pagos
-│   ├── pagos.service.ts
+│   ├── pagos.controller.ts           # Registro de pagos (Filtros Avanzados)
 │   ├── dto/
 │   └── entities/
 │       ├── concepto-pago.entity.ts
 │       └── pago.entity.ts
 │
 └── auditoria/                 # 📝 Logs y Auditoría
-    └── (pendiente implementación)
+    ├── auditoria.module.ts
+    ├── entities/
+    │   └── auditoria.entity.ts
+    └── subscribers/
+        └── auditoria.subscriber.ts  # Subscriber TypeORM global para interceptar Cambios
 ```
 
 ---
@@ -84,45 +83,26 @@ frontend/src/app/
 │   ├── interceptors/
 │   │   └── auth.interceptor.ts # Inyección de JWT
 │   ├── models/
-│   │   ├── auth.model.ts
-│   │   ├── caja.model.ts
-│   │   ├── infraestructura.model.ts
-│   │   └── registro.model.ts
-│   ├── services/              # Servicios HTTP
-│   │   ├── auth.service.ts
-│   │   ├── difuntos.service.ts
-│   │   ├── espacios.service.ts
-│   │   ├── inhumaciones.service.ts
-│   │   ├── pagos.service.ts
-│   │   ├── sectores.service.ts
-│   │   └── titulares.service.ts
-│   └── layout/                # (deprecado, usar /layout)
+│   ├── services/              # Servicios HTTP (ExportService para reportes)
 │
-├── layout/                    # 🎨 Layout Principal
+├── layout/                    # 🎨 Layout Principal (Soporte Modo Oscuro)
 │   ├── app.layout.ts          # Layout con sidebar
-│   ├── app.topbar.ts          # Barra superior
+│   ├── app.topbar.ts          # Barra superior (Botón Dark Mode)
 │   ├── app.menu.ts            # Menú lateral
 │   └── app.footer.ts          # Pie de página
 │
-├── features/                  # 📦 Módulos de Funcionalidad
-│   ├── auth/                  # Login
-│   ├── dashboard/             # Panel principal
-│   ├── sectores/              # Gestión de sectores
-│   │   ├── sectores-list/
-│   │   └── mapa-nichos/       # Visualización gráfica
-│   ├── espacios/              # Gestión de nichos/fosas
-│   ├── difuntos/              # Gestión de difuntos
-│   ├── titulares/             # Gestión de responsables
-│   ├── inhumaciones/          # Gestión de inhumaciones
-│   ├── conceptos-pago/        # Tipos de cobro
-│   ├── pagos/                 # Registro de pagos
-│   ├── usuarios/              # Gestión de usuarios
-│   └── roles/                 # Gestión de roles
-│
-└── pages/                     # 📄 Páginas de Template (Sakai)
-    ├── landing/               # Página de bienvenida
-    ├── uikit/                 # Demos de componentes UI
-    └── documentation/         # Documentación del template
+└── features/                  # 📦 Módulos de Funcionalidad
+    ├── auth/                  # Login
+    ├── dashboard/             # Panel principal (Chart.js métricas)
+    ├── sectores/              # Gestión de sectores (Mapa Pabellón Clásico)
+    ├── espacios/              # Gestión de nichos/fosas
+    ├── difuntos/              # Gestión de difuntos
+    ├── titulares/             # Gestión de responsables (Modal Estados de Cuenta)
+    ├── inhumaciones/          # Gestión de inhumaciones
+    ├── conceptos-pago/        # Tipos de cobro
+    ├── pagos/                 # Registro de pagos (Filtros Avanzados e Impresión)
+    ├── usuarios/              # Gestión de usuarios
+    └── roles/                 # Gestión de roles
 ```
 
 ---
@@ -133,7 +113,7 @@ frontend/src/app/
 graph TD
     A[Usuario] -->|Interactúa| B[Frontend Angular]
     B -->|HTTP + JWT| C[Backend NestJS]
-    C -->|TypeORM| D[(MySQL Database)]
+    C -->|TypeORM| D[(PostgreSQL Database)]
     
     subgraph Frontend
         B1[Components] --> B2[Services]
@@ -159,21 +139,22 @@ erDiagram
     INHUMACION ||--o{ PAGO : genera
     CONCEPTO_PAGO ||--o{ PAGO : define
     USUARIO }|--|| ROL : tiene
+    AUDITORIA }o--|| USUARIO : asocia_acciones
 ```
 
 ### Relaciones Clave:
 - **Difunto ↔ Inhumación**: 1:1 (un difunto solo puede ser inhumado una vez)
 - **Espacio ↔ Inhumación**: 1:N (un espacio puede tener múltiples inhumaciones en el tiempo)
 - **Titular ↔ Inhumación**: 1:N (un titular puede ser responsable de varias inhumaciones)
+- **Usuario ↔ Auditoria**: 1:N (el suscriptor registra el ID del usuario en curso utilizando Continuation Local Storage)
 
 ---
 
-## 🛡️ Seguridad
+## 🛡️ Seguridad y Auditoría
 
-1. **Autenticación**: JWT con expiración configurable
-2. **Autorización**: Guards basados en roles (ADMIN, OPERADOR, CONSULTA)
-3. **Validación**: class-validator en DTOs del backend
-4. **Protección de rutas**: AuthGuard en frontend
+1. **Autenticación**: JWT con expiración configurable.
+2. **Autorización**: Guards basados en permisos granulares y roles (ADMIN, CAJERO, etc.).
+3. **Auditoría Automática**: Suscriptor TypeORM acoplado a `nestjs-cls` intercepta INSERTS, UPDATES y DELETES, logueando metadatos (antes y después) con el actor responsable de forma transparente.
 
 ---
 
@@ -182,10 +163,10 @@ erDiagram
 ### Variables de Entorno Backend (.env)
 ```env
 DB_HOST=localhost
-DB_PORT=3306
-DB_USERNAME=root
+DB_PORT=5432
+DB_USERNAME=postgres
 DB_PASSWORD=****
-DB_DATABASE=cementerio_db
+DB_NAME=cementerio_db
 JWT_SECRET=****
 JWT_EXPIRES_IN=24h
 ```
@@ -200,42 +181,26 @@ export const environment = {
 
 ---
 
-## 📝 Convenciones de Código
-
-### Backend (NestJS)
-- Controllers: `nombre.controller.ts`
-- Services: `nombre.service.ts`
-- Entities: `nombre.entity.ts`
-- DTOs: `create-nombre.dto.ts`, `update-nombre.dto.ts`
-
-### Frontend (Angular)
-- Components: `nombre-list.component.ts/html/scss`
-- Services: `nombre.service.ts`
-- Models: `nombre.model.ts`
-
----
-
 ## 🚀 Comandos de Desarrollo
 
 ```bash
+# General
+call build-all.bat     # Instala NPM y transpila el código de Backend y Frontend
+
 # Backend
 cd backend
 npm run start:dev      # Desarrollo con hot reload
 
 # Frontend
 cd frontend
-npm start              # ng serve
-
-# Base de datos
-# Usar MySQL Workbench o phpMyAdmin
+npm start              # ng serve local
 ```
 
 ---
 
 ## 📈 Mejoras Futuras
 
-- [ ] Implementar auditoría completa
-- [ ] Agregar reportes PDF
-- [ ] Sistema de notificaciones (vencimientos)
-- [ ] Backup automático de BD
-- [ ] Integración con sistemas de pago
+- [ ] Sistema de notificaciones avanzadas (vencimientos).
+- [ ] Backup automático de BD programado como tarea CRON.
+- [ ] Scripts de Carga de Datos y Poblamiento Inicial (Infraestructura de nichos masiva).
+- [ ] Configuración del servidor de producción (NSSM, NGINX).

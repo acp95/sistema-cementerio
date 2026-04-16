@@ -214,4 +214,15 @@ export class UsuariosListComponent implements OnInit {
     onGlobalFilter(table: Table, event: Event) {
         table.filterGlobal((event.target as HTMLInputElement).value, 'contains');
     }
+
+    getInitials(nombre: string, usernameFallback: string): string {
+        const text = nombre || usernameFallback;
+        if (!text) return 'U';
+        const parts = text.trim().split(' ');
+        if (parts.length >= 2) {
+            return (parts[0].charAt(0) + parts[1].charAt(0)).toUpperCase();
+        }
+        return text.trim().charAt(0).toUpperCase();
+    }
 }
+

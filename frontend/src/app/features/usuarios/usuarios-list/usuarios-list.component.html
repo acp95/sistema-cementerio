@@ -13,64 +13,103 @@
     </p-toolbar>
 
     <p-table #dt [value]="usuarios" [rows]="10" [paginator]="true"
-        [globalFilterFields]="['username', 'nombreCompleto', 'email']" [tableStyle]="{ 'min-width': '75rem' }"
-        [rowHover]="true" dataKey="id" currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios"
-        [showCurrentPageReport]="true">
+        [globalFilterFields]="['username', 'nombreCompleto', 'email']" 
+        [tableStyle]="{ 'min-width': '75rem' }"
+        [rowHover]="true" 
+        dataKey="id" 
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} usuarios registrados"
+        [showCurrentPageReport]="true"
+        styleClass="p-datatable-modern">
+        
         <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Gestión de Usuarios</h5>
-                <p-iconfield>
+            <div class="flex items-center justify-between pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-indigo-100 rounded-xl">
+                        <i class="pi pi-users text-indigo-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 text-xl font-bold tracking-tight">Gestión de Usuarios</h5>
+                        <p class="text-sm text-gray-500 m-0">Administración de cuentas y niveles de acceso</p>
+                    </div>
+                </div>
+                <p-iconfield styleClass="w-80">
                     <p-inputicon styleClass="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar por Nombre, Usuario o Email..." class="w-full rounded-xl border-gray-200" />
                 </p-iconfield>
             </div>
         </ng-template>
+
         <ng-template #header>
             <tr>
-                <th pSortableColumn="username" style="min-width:14rem">
-                    Usuario <p-sortIcon field="username" />
+                <th pSortableColumn="nombreCompleto" style="min-width:20rem">
+                    Personal / Usuario <p-sortIcon field="nombreCompleto" />
                 </th>
-                <th pSortableColumn="nombreCompleto" style="min-width:14rem">
-                    Nombre Completo <p-sortIcon field="nombreCompleto" />
+                <th pSortableColumn="email" style="min-width:14rem">
+                    Correo Electrónico <p-sortIcon field="email" />
                 </th>
-                <th pSortableColumn="email">
-                    Email <p-sortIcon field="email" />
+                <th pSortableColumn="rol.nombre" style="width: 180px">
+                    Rol de Acceso <p-sortIcon field="rol.nombre" />
                 </th>
-                <th pSortableColumn="rol.nombre">
-                    Rol <p-sortIcon field="rol.nombre" />
-                </th>
-                <th pSortableColumn="activo">
+                <th pSortableColumn="activo" style="width: 130px">
                     Estado <p-sortIcon field="activo" />
                 </th>
-                <th style="min-width: 12rem"></th>
+                <th style="width: 180px" class="text-center">Acciones</th>
             </tr>
         </ng-template>
+
         <ng-template #body let-usuario>
-            <tr>
-                <td>{{ usuario.username }}</td>
-                <td>{{ usuario.nombreCompleto }}</td>
-                <td>{{ usuario.email || '-' }}</td>
-                <td>{{ usuario.rol?.nombre || '-' }}</td>
+            <tr [ngClass]="{'opacity-60 bg-gray-50': !usuario.activo}">
                 <td>
-                    <p-tag [value]="usuario.activo ? 'ACTIVO' : 'INACTIVO'"
-                        [severity]="usuario.activo ? 'success' : 'danger'" />
+                    <div class="avatar-cell">
+                        <div class="avatar-circle" [style.background]="!usuario.activo ? '#e2e8f0' : ''">
+                            {{ getInitials(usuario.nombreCompleto, usuario.username) }}
+                        </div>
+                        <div class="info">
+                            <span class="main-text">{{ usuario.nombreCompleto }}</span>
+                            <span class="sub-text">@{{ usuario.username }}</span>
+                        </div>
+                    </div>
                 </td>
                 <td>
-                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="editUsuario(usuario)" *ngIf="authService.hasPermission('actualizar_usuarios')" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                        (click)="deleteUsuario(usuario)" *ngIf="authService.hasPermission('eliminar_usuarios')" />
+                    <div class="flex items-center gap-2 text-gray-600">
+                        <i class="pi pi-envelope text-xs opacity-50"></i>
+                        <span class="text-sm">{{ usuario.email || 'Sin correo' }}</span>
+                    </div>
+                </td>
+                <td>
+                    <span class="px-3 py-1 bg-indigo-50 text-indigo-700 border border-indigo-100 rounded-lg text-xs font-bold uppercase tracking-wider">
+                        {{ usuario.rol?.nombre || 'SIN ROL' }}
+                    </span>
+                </td>
+                <td>
+                    <span class="status-badge" [ngClass]="usuario.activo ? 'status-active' : 'status-annulled'">
+                        {{ usuario.activo ? 'ACTIVO' : 'INACTIVO' }}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons justify-center">
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                            (click)="editUsuario(usuario)" *ngIf="authService.hasPermission('actualizar_usuarios')" 
+                            pTooltip="Editar cuenta" />
+                        
+                        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                            (click)="deleteUsuario(usuario)" *ngIf="authService.hasPermission('eliminar_usuarios')" 
+                            pTooltip="Eliminar permanentemente" />
+                    </div>
                 </td>
             </tr>
         </ng-template>
         <ng-template #emptymessage>
             <tr>
-                <td colspan="6" class="text-center">No se encontraron usuarios.</td>
+                <td colspan="5" class="text-center py-8">
+                    <i class="pi pi-user-minus text-3xl text-gray-300 block mb-3"></i>
+                    <span class="text-gray-500">No se encontraron usuarios registrados.</span>
+                </td>
             </tr>
         </ng-template>
     </p-table>
 
-    <p-dialog [(visible)]="usuarioDialog" [style]="{ width: '450px' }" header="Detalles del Usuario" [modal]="true"
+    <p-dialog [(visible)]="usuarioDialog" [style]="{ width: '450px', maxWidth: '95vw' }" header="Detalles del Usuario" [modal]="true"
         class="p-fluid">
         <ng-template #content>
             <div class="flex flex-col gap-6">
@@ -122,5 +161,5 @@
         </ng-template>
     </p-dialog>
 
-    <p-confirmDialog [style]="{ width: '450px' }" />
+    <p-confirmDialog [style]="{ width: '450px', maxWidth: '95vw' }" />
 </div>

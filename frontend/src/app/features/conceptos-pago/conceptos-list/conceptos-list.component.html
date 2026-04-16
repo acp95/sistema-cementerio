@@ -18,63 +18,101 @@
     </p-toolbar>
 
     <p-table #dt [value]="conceptos" [rows]="10" [paginator]="true" [globalFilterFields]="['nombre']"
-        [tableStyle]="{ 'min-width': '75rem' }" [rowHover]="true" dataKey="id"
-        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} conceptos"
-        [showCurrentPageReport]="true">
+        [tableStyle]="{ 'min-width': '75rem' }" 
+        [rowHover]="true" 
+        dataKey="id"
+        currentPageReportTemplate="Mostrando {first} a {last} de {totalRecords} conceptos definidos"
+        [showCurrentPageReport]="true"
+        styleClass="p-datatable-modern">
+        
         <ng-template #caption>
-            <div class="flex items-center justify-between">
-                <h5 class="m-0">Gestión de Conceptos de Pago</h5>
-                <p-iconfield>
+            <div class="flex items-center justify-between pb-4">
+                <div class="flex items-center gap-3">
+                    <div class="p-3 bg-emerald-100 rounded-xl">
+                        <i class="pi pi-list-check text-emerald-600 text-2xl"></i>
+                    </div>
+                    <div>
+                        <h5 class="m-0 text-xl font-bold tracking-tight">Catálogo de Conceptos</h5>
+                        <p class="text-sm text-gray-500 m-0">Definición de aranceles y servicios</p>
+                    </div>
+                </div>
+                <p-iconfield styleClass="w-80">
                     <p-inputicon styleClass="pi pi-search" />
-                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar..." />
+                    <input pInputText type="text" (input)="onGlobalFilter(dt, $event)" placeholder="Buscar conceptos..." class="w-full rounded-xl border-gray-200" />
                 </p-iconfield>
             </div>
         </ng-template>
+
         <ng-template #header>
             <tr>
-                <th pSortableColumn="nombre" style="min-width:14rem">
-                    Nombre <p-sortIcon field="nombre" />
+                <th pSortableColumn="nombre" style="min-width:20rem">
+                    Concepto de Pago <p-sortIcon field="nombre" />
                 </th>
-                <th pSortableColumn="precioBase">
+                <th pSortableColumn="precioBase" style="width: 150px">
                     Precio Base <p-sortIcon field="precioBase" />
                 </th>
-                <th pSortableColumn="esPeriodico">
+                <th pSortableColumn="esPeriodico" style="width: 150px">
                     Periódico <p-sortIcon field="esPeriodico" />
                 </th>
-                <th pSortableColumn="activo">
+                <th pSortableColumn="activo" style="width: 130px">
                     Estado <p-sortIcon field="activo" />
                 </th>
-                <th style="min-width: 12rem"></th>
+                <th style="width: 150px" class="text-center">Acciones</th>
             </tr>
         </ng-template>
+
         <ng-template #body let-concepto>
-            <tr>
-                <td>{{ concepto.nombre }}</td>
-                <td>{{ concepto.precioBase | currency:'PEN':'symbol-narrow':'1.2-2' }}</td>
+            <tr [ngClass]="{'opacity-60 bg-gray-50': !concepto.activo}">
                 <td>
-                    <p-tag [value]="concepto.esPeriodico ? 'Sí' : 'No'"
-                        [severity]="concepto.esPeriodico ? 'info' : 'secondary'" />
+                    <div class="flex items-center gap-3">
+                        <div class="p-2 bg-gray-50 rounded-lg border border-gray-100">
+                            <i class="pi pi-tag text-gray-400"></i>
+                        </div>
+                        <span class="font-bold text-gray-800 tracking-tight">{{ concepto.nombre }}</span>
+                    </div>
                 </td>
                 <td>
-                    <p-tag [value]="concepto.activo ? 'Activo' : 'Inactivo'"
-                        [severity]="concepto.activo ? 'success' : 'danger'" />
+                    <span class="text-lg font-bold text-emerald-700 tracking-tighter">
+                        {{ concepto.precioBase | currency:'PEN':'symbol-narrow':'1.2-2' }}
+                    </span>
                 </td>
                 <td>
-                    <p-button icon="pi pi-pencil" class="mr-2" [rounded]="true" [outlined]="true"
-                        (click)="editConcepto(concepto)" *ngIf="authService.hasPermission('actualizar_conceptos')" />
-                    <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [outlined]="true"
-                        (click)="deleteConcepto(concepto)" *ngIf="authService.hasPermission('eliminar_conceptos')" />
+                    <div class="flex items-center gap-2">
+                        <i class="pi" [ngClass]="concepto.esPeriodico ? 'pi-calendar-plus text-blue-500' : 'pi-calendar-minus text-gray-300'"></i>
+                        <span class="text-xs font-semibold" [ngClass]="concepto.esPeriodico ? 'text-blue-600' : 'text-gray-400'">
+                            {{ concepto.esPeriodico ? 'ANUAL' : 'ÚNICO' }}
+                        </span>
+                    </div>
+                </td>
+                <td>
+                    <span class="status-badge" [ngClass]="concepto.activo ? 'status-active' : 'status-annulled'">
+                        {{ concepto.activo ? 'ACTIVO' : 'INACTIVO' }}
+                    </span>
+                </td>
+                <td>
+                    <div class="action-buttons justify-center">
+                        <p-button icon="pi pi-pencil" [rounded]="true" [text]="true"
+                            (click)="editConcepto(concepto)" *ngIf="authService.hasPermission('actualizar_conceptos')" 
+                            pTooltip="Editar concepto" />
+                        
+                        <p-button icon="pi pi-trash" severity="danger" [rounded]="true" [text]="true"
+                            (click)="deleteConcepto(concepto)" *ngIf="authService.hasPermission('eliminar_conceptos')" 
+                            pTooltip="Eliminar permanentemente" />
+                    </div>
                 </td>
             </tr>
         </ng-template>
         <ng-template #emptymessage>
             <tr>
-                <td colspan="5" class="text-center">No se encontraron conceptos.</td>
+                <td colspan="5" class="text-center py-8">
+                    <i class="pi pi-tags text-3xl text-gray-300 block mb-3"></i>
+                    <span class="text-gray-500">No se encontraron conceptos de pago registrados.</span>
+                </td>
             </tr>
         </ng-template>
     </p-table>
 
-    <p-dialog [(visible)]="conceptoDialog" [style]="{ width: '450px' }" header="Detalles del Concepto" [modal]="true"
+    <p-dialog [(visible)]="conceptoDialog" [style]="{ width: '450px', maxWidth: '95vw' }" header="Detalles del Concepto" [modal]="true"
         class="p-fluid">
         <ng-template #content>
             <div class="flex flex-col gap-6">
@@ -114,5 +152,5 @@
         </ng-template>
     </p-dialog>
 
-    <p-confirmDialog [style]="{ width: '450px' }" />
+    <p-confirmDialog [style]="{ width: '450px', maxWidth: '95vw' }" />
 </div>

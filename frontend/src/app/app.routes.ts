@@ -78,6 +78,10 @@ export const routes: Routes = [
             {
                 path: 'permisos',
                 loadComponent: () => import('./features/permisos/permisos-list/permisos-list.component').then(m => m.PermisosListComponent)
+            },
+            {
+                path: 'respaldos',
+                loadComponent: () => import('./features/backup/backup.component').then(m => m.BackupComponent)
             }
         ]
     },
