@@ -84,18 +84,18 @@ export class InhumacionesPdfService {
             doc.setFontSize(10.5);
             doc.text(label, margin + 2, yPos);
             
-            const labelWidth = doc.getTextWidth(label);
-            const startX = margin + 5 + 40; // Fixed start for values
+            const startX = margin + 65; // Fixed start for values (wider to prevent overlap)
             
-            doc.setFont('times', isBold ? 'bold' : 'normal');
-            doc.text(String(value), startX, yPos);
-            
-            // Dotted line
+            // Dotted line lowered slightly so text sits above it
             doc.setDrawColor(150);
             doc.setLineDashPattern([0.5, 0.5], 0);
-            doc.line(startX, yPos + 1, margin + contentWidth - 2, yPos + 1);
+            doc.line(startX, yPos + 1.5, margin + contentWidth - 2, yPos + 1.5);
             doc.setLineDashPattern([], 0);
             doc.setDrawColor(0);
+            
+            // Text slightly above the line
+            doc.setFont('times', isBold ? 'bold' : 'normal');
+            doc.text(String(value), startX, yPos - 0.5);
             
             return yPos + 7;
         };
@@ -164,9 +164,10 @@ export class InhumacionesPdfService {
         const obs = inhumacion.observaciones || 'Ninguna.';
         const splitObs = doc.splitTextToSize(obs, contentWidth);
         doc.text(splitObs, margin, y);
+        y += (splitObs.length * 4); // Update Y after observations
         
         // --- Signatures ---
-        y = pageHeight - 50;
+        y = Math.max(y + 30, pageHeight - 50); // Flow naturally if content is long, else stick to bottom
         doc.setLineDashPattern([1, 1], 0);
         // Administration line
         doc.line(margin + 10, y, margin + 60, y);
