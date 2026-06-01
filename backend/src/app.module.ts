@@ -72,7 +72,9 @@ import { BackupModule } from './infraestructura/backup/backup.module';
           // Auditoria
           Auditoria,
         ],
-        synchronize: configService.get('NODE_ENV') === 'development',
+        migrations: ['dist/database/migrations/*.js'],
+        migrationsRun: true,
+        synchronize: false,
         logging: configService.get('NODE_ENV') === 'development',
       }),
       inject: [ConfigService],
