@@ -13,7 +13,7 @@ jobs:
       - uses: actions/checkout@v4
       
       - name: Deploy to Railway
-        uses: railway-app/cli-action@v1
+        uses: railwayapp/cli-action@v2
         env:
           RAILWAY_TOKEN: ${{ secrets.RAILWAY_TOKEN }}
         with:
